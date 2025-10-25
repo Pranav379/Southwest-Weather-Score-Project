@@ -1,3 +1,6 @@
+# Large data files
+Data/Delays 2022-2025.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
