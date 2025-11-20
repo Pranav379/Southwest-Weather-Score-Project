@@ -36,7 +36,7 @@ def load_data(file_path):
         return None
     try:
         # Load only first 5000 rows to speed up loading
-        df = pd.read_csv(file_path, nrows=5000)
+        df = pd.read_csv(file_path, nrows=50000)
         df.columns = df.columns.str.strip()
         return df
     except FileNotFoundError:
@@ -48,37 +48,42 @@ def load_data(file_path):
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
 
 # ==========================================
-# 3. SOUTHWEST STYLING (CSS)
+# 3. SOUTHWEST STYLING (CSS) - LEGIBILITY IMPROVED (DARK MODE ELEMENTS)
 # ==========================================
 SOUTHWEST_CSS = """
 <style>
-    * { box-sizing: border-box; }
-    
-    /* Main Background */
-    [data-testid="stAppViewContainer"] { 
-        background-color: #f8f9fa !important; 
-        color: #333333 !important; 
+    * {
+        box-sizing: border-box;
     }
-    [data-testid="stHeader"] { background-color: rgba(0,0,0,0) !important; }
-    
-    /* Typography */
-    h1, h2, h3 { 
-        color: #304CB2 !important; 
-        font-family: 'Arial', sans-serif; 
-        font-weight: 800; 
+
+    /* ===== App Background & Layout ===== */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f8f9fa !important;
+        color: #333333 !important;
     }
-    
-    /* Score Box Container */
+
+    [data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0) !important;
+    }
+
+    /* ===== Typography ===== */
+    h1, h2, h3 {
+        color: #304CB2 !important;  /* Southwest Blue */
+        font-family: 'Arial', sans-serif;
+        font-weight: 800;
+    }
+
+    /* ===== Score Box ===== */
     .score-container {
         background: linear-gradient(145deg, #304CB2, #1e327a);
-        color: white;
+        color: #ffffff;
         padding: 40px 30px;
         border-radius: 20px;
         text-align: center;
         margin: 20px 0;
         box-shadow: 0 10px 30px rgba(48, 76, 178, 0.2);
     }
-    
+
     .score-label {
         font-size: 0.9rem;
         text-transform: uppercase;
@@ -87,36 +92,124 @@ SOUTHWEST_CSS = """
         margin-bottom: 15px;
         font-weight: 600;
     }
-    
+
     .big-score {
         font-size: 3.5rem;
         font-weight: 900;
-        color: #FFB612;
+        color: #FFB612;  /* Southwest Yellow */
         line-height: 1;
         margin: 10px 0;
     }
-    
-    /* Divider */
+
+    /* ===== Divider ===== */
     hr {
         border: none;
         border-top: 2px solid #e0e0e0;
         margin: 30px 0;
     }
-    
-    /* Expander Styling */
-    .stExpander { 
-        border: 1px solid #e0e0e0 !important;
-        border-radius: 8px !important;
-        margin-bottom: 12px !important;
+
+    /* ===== Expander Bodies (inner content) ===== */
+    /* Keep content dark-on-light for readability */
+    .stExpander > div > div {
+        color: #333333 !important;
+        background-color: #ffffff !important;
     }
-    
-    /* Table styling */
-    [data-testid="stDataFrame"] {
-        width: 100% !important;
+
+    /* ===== Buttons ===== */
+    button {
+        background-color: #304CB2 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    button:hover {
+        background-color: #1e327a !important;
+    }
+
+    /* ===== DataFrame Styling ===== */
+    /* Header */
+    div.stDataFrame table thead {
+        background-color: #304CB2 !important;  /* Southwest Blue */
+    }
+
+    div.stDataFrame table thead th {
+        color: #FFB612 !important;            /* Southwest Yellow */
+        font-weight: 700 !important;
+    }
+
+    /* Body rows */
+    div.stDataFrame table tbody tr {
+        background-color: #333333 !important;  /* Dark background */
+    }
+
+    div.stDataFrame table tbody td {
+        color: #ffffff !important;             /* White text */
+    }
+
+    /* =========================================================
+       EXPANDER HEADERS (title + icon) - handle old & new DOM
+       ========================================================= */
+
+    /* Old layout: header in first child div */
+    div[data-testid="stExpander"] > div:first-child {
+        background-color: #1e327a !important;
+        border-radius: 8px !important;
+    }
+
+    div[data-testid="stExpander"] > div:first-child * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    /* New layout: <details data-testid="stExpander"><summary>...</summary> */
+    details[data-testid="stExpander"] > summary {
+        background-color: #1e327a !important;
+        border-radius: 8px !important;
+        list-style: none;  /* hide default marker if any */
+    }
+
+    details[data-testid="stExpander"] > summary * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    /* Ensure the summary itself (text node) is also white */
+    details[data-testid="stExpander"] > summary {
+        color: #ffffff !important;
     }
 </style>
 """
+
 st.markdown(SOUTHWEST_CSS, unsafe_allow_html=True)
+
+st.markdown(SOUTHWEST_CSS, unsafe_allow_html=True)
+
+# --- FORCE expander headers to be white-on-blue, no matter what ---
+NUKE_EXPANDER_CSS = """
+<style>
+/* Target ALL expander headers via <summary> tag */
+summary {
+    background-color: #1e327a !important;  /* dark blue bar */
+    color: #ffffff !important;             /* white text */
+    border-radius: 8px !important;
+}
+
+/* Make any child nodes (spans, emojis, icons, etc.) white too */
+summary * {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+/* In case Streamlit wraps the header in a div inside summary */
+summary div {
+    color: #ffffff !important;
+}
+</style>
+"""
+st.markdown(NUKE_EXPANDER_CSS, unsafe_allow_html=True)
+
 
 # ==========================================
 # 4. LOGIC & HEURISTIC ENGINE
@@ -172,29 +265,62 @@ if st.session_state.page == 'landing':
     
     st.markdown("---")
     
-    # Create user-friendly identifiers
-    data_options = []
+    # Step 1: Get unique flight numbers
+    flight_numbers = []
     for index, row in TEST_DATA_DF.iterrows():
         flight_num = row.get('Flight_Number_Reporting_Airline', 'N/A')
-        # Format flight number as WN + number
         if flight_num != 'N/A':
             try:
                 flight_num = f"WN{int(float(flight_num))}"
             except:
                 flight_num = f"WN{flight_num}"
-        
-        option_label = f"Flight {flight_num}"
-        data_options.append(option_label)
+        if flight_num not in flight_numbers:
+            flight_numbers.append(flight_num)
     
-    selected_label = st.selectbox(
-        "📊 Select a flight record to analyze:",
-        options=data_options,
-        key="data_select"
+    selected_flight_num = st.selectbox(
+        "📊 Select a flight number:",
+        options=flight_numbers,
+        key="flight_select"
+    )
+    
+    # Step 2: Get all routes for this flight number
+    matching_rows = []
+    for index, row in TEST_DATA_DF.iterrows():
+        flight_num = row.get('Flight_Number_Reporting_Airline', 'N/A')
+        if flight_num != 'N/A':
+            try:
+                flight_num = f"WN{int(float(flight_num))}"
+            except:
+                flight_num = f"WN{flight_num}"
+        if flight_num == selected_flight_num:
+            origin = row.get('Origin', 'N/A')
+            dest = row.get('Dest', 'N/A')
+            route_label = f"{origin} → {dest}"
+            matching_rows.append({
+                'label': route_label,
+                'index': index
+            })
+    
+    # Remove duplicates but keep index
+    unique_routes = []
+    seen = set()
+    for item in matching_rows:
+        if item['label'] not in seen:
+            unique_routes.append(item)
+            seen.add(item['label'])
+    
+    route_options = [r['label'] for r in unique_routes]
+    
+    selected_route = st.selectbox(
+        "📍 Select a route:",
+        options=route_options,
+        key="route_select"
     )
     
     if st.button("Analyze", key="analyze_btn", use_container_width=True):
-        # Extract the index from the label
-        selected_index = int(selected_label.split(' ')[1].replace('WN', ''))
+        # Find the index for this route
+        selected_route_obj = next(r for r in unique_routes if r['label'] == selected_route)
+        selected_index = selected_route_obj['index']
         selected_row = TEST_DATA_DF.iloc[selected_index]
         
         # Format the data
@@ -245,7 +371,8 @@ elif st.session_state.page == 'result':
         st.success("CSV Data")
     
     weather = flight['weather_raw']
-    risk_score = calculate_risk_score(weather, flight)
+    # Use the actual CSV weather score instead of calculating
+    risk_score = flight.get('true_weather_score', 0)
     
     # Display score card
     st.markdown(f"""
@@ -255,11 +382,6 @@ elif st.session_state.page == 'result':
     </div>
     """, unsafe_allow_html=True)
     st.caption("Source: CSV Dataset")
-    
-    # Show comparison with actual CSV score
-    actual_score = flight.get('true_weather_score', 0)
-    st.info(f"**Actual CSV Weather Score:** {actual_score:.1f}")
-    st.caption("*Our model's prediction vs. the original dataset score*")
     
     # Status and gauge
     col_gauge, col_status = st.columns([1, 1])
@@ -307,6 +429,8 @@ elif st.session_state.page == 'result':
     col_inc, col_dec = st.columns(2)
     
     with col_inc:
+        # Note: Content inside expanders remains dark text on white background for this section,
+        # as a fully dark mode requires more extensive CSS changes than requested.
         with st.expander("📈 Factors INCREASING Risk", expanded=True):
             risks = []
             if weather['wspd'] > 25:
