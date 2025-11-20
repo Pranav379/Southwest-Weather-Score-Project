@@ -1,19 +1,4 @@
 # Large data files
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-Data/Delays 2022-2025.csv
-=======
-Data/FINAL_DATASET_CLEANED.csv
->>>>>>> 04660cdad026a67da1a44a9b3cf507da0de6536c
-=======
-input_data.csv
-FINAL_DATASET.csv
->>>>>>> a1fe1c425312e17d5b5c41b23c12724731974610
-
-=======
-Data/FINAL_DATASET_CLEANED.csv
->>>>>>> Mann
 Data/
 # Byte-compiled / optimized / DLL files
 __pycache__/
