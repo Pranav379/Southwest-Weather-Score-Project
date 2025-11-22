@@ -214,7 +214,12 @@ if 'page' not in st.session_state:
 if 'selected_flight' not in st.session_state:
     st.session_state.selected_flight = None
 
-st.title("✈️ Flight Delay Predictor")
+# --- LOGO & TITLE SECTION ---
+# Official Southwest Logo (Transparent PNG)
+st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=250)
+
+# Removed the plane emoji since the logo is now there
+st.title("Flight Delay Predictor")
 
 # Check if CSV data is available
 if TEST_DATA_DF is None:
@@ -225,7 +230,7 @@ if TEST_DATA_DF is None:
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
     st.markdown("### 🕒 Analyze Flight Delay Risk")
-    st.markdown("Select a flight record from your dataset to get a weather delay prediction.")
+    st.markdown("Enter your flight number to get started!")
     
     st.markdown("---")
     
