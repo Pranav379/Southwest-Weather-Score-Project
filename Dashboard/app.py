@@ -59,95 +59,118 @@ if TEST_DATA_DF is not None and 'weatherScore' in TEST_DATA_DF.columns:
     TEST_DATA_DF = TEST_DATA_DF[TEST_DATA_DF['weatherScore'] > 0]
 
 # ==========================================
-# 3. SOUTHWEST STYLING (CSS) - LEGIBILITY IMPROVED (DARK MODE ELEMENTS)
+# 3. SOUTHWEST STYLING (CSS) - THEME UPGRADE
 # ==========================================
 SOUTHWEST_CSS = """
 <style>
-    /* 1. Global Reset */
-    * {
-        box-sizing: border-box;
-    }
-
-    /* 2. Main App Background & Text */
+    /* 1. Main Background */
     [data-testid="stAppViewContainer"] {
-        background-color: #f8f9fa !important;
+        background-color: #f4f7f6 !important; /* Very light grey-blue */
         color: #333333 !important;
     }
     
-    [data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
+    /* 2. Cards (The "Boarding Pass" Look) */
+    .stCard {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Soft shadow */
+        margin-bottom: 20px;
+        border-top: 5px solid #304CB2; /* Southwest Blue Header Line */
+    }
+    
+    /* 3. Headers */
+    h1, h2, h3 {
+        color: #304CB2 !important;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-weight: 800;
+    }
+    
+    /* 4. Southwest Striping (Decorative Line) */
+    .sw-stripe {
+        height: 6px;
+        width: 100%;
+        background: linear-gradient(90deg, #304CB2 33%, #C60C30 33%, #C60C30 66%, #FFB612 66%);
+        border-radius: 3px;
+        margin: 10px 0 25px 0;
     }
 
-    /* 3. WIDGET LABELS ( The Fix ) */
-    /* Target the container and every possible child element */
-    [data-testid="stWidgetLabel"],
-    [data-testid="stWidgetLabel"] > div,
-    [data-testid="stWidgetLabel"] > label,
-    [data-testid="stWidgetLabel"] p {
-        color: #304CB2 !important; /* Southwest Blue */
+    /* 5. Score Box Styling */
+    .score-container {
+        background: linear-gradient(135deg, #304CB2, #1A2C75);
+        color: #ffffff;
+        padding: 30px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(48, 76, 178, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .score-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #FFB612 !important; 
+        font-weight: 700;
+    }
+    .big-score {
+        font-size: 4rem;
+        font-weight: 900;
+        color: #ffffff !important;
+        margin: 5px 0;
+    }
+
+    /* 6. Buttons (Rounder & Bolder) */
+    button {
+        background-color: #304CB2 !important;
+        color: white !important;
+        border-radius: 50px !important; /* Pill shape */
+        font-weight: 700 !important;
+        padding: 0.5rem 1rem !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+    }
+    button:hover {
+        background-color: #253b8c !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(48, 76, 178, 0.3);
+    }
+    
+    /* 7. Custom Tables */
+    .details-table td {
+        padding: 12px 5px;
+        border-bottom: 1px solid #f0f0f0;
+        color: #444;
+    }
+    .details-label {
+        font-weight: 700;
+        color: #304CB2;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    .details-value {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #222;
+    }
+    /* ... (keep your existing CSS) ... */
+    
+    /* 8. FIX: Force Input Labels to be Visible (Southwest Blue) */
+    .stSelectbox label p {
+        color: #304CB2 !important; /* Force text to Blue */
         font-size: 1.1rem !important;
         font-weight: 700 !important;
     }
-
-    /* 4. Selectbox Input Text (The text inside the box) */
-    div[data-baseweb="select"] > div {
-        color: #333333 !important; /* Dark grey text */
-        background-color: #ffffff !important; /* White background */
-    }
-
-    /* 5. Headings */
-    h1, h2, h3 {
-        color: #304CB2 !important;
-        font-family: 'Arial', sans-serif;
-        font-weight: 800;
-    }
-
-    /* 6. Score Box Styling */
-    .score-container {
-        background: linear-gradient(145deg, #304CB2, #1e327a);
-        color: #ffffff;
-        padding: 40px 30px;
-        border-radius: 20px;
-        text-align: center;
-        margin: 20px 0;
-        box-shadow: 0 10px 30px rgba(48, 76, 178, 0.2);
-    }
-    .score-label {
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        opacity: 0.85;
-        margin-bottom: 15px;
-        font-weight: 600;
-        color: #ffffff !important; /* Force white text inside blue box */
-    }
-    .big-score {
-        font-size: 3.5rem;
-        font-weight: 900;
-        color: #FFB612 !important;
-        line-height: 1;
-        margin: 10px 0;
-    }
-
-    /* 7. Buttons */
-    button {
-        background-color: #304CB2 !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-    }
-    button:hover {
-        background-color: #1e327a !important;
-    }
     
-    /* 8. Expander/Details Fixes */
-    summary {
-        color: #ffffff !important;
+    /* Optional: Fix the dropdown box itself to look cleaner */
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important; /* White background */
+        border: 1px solid #304CB2 !important; /* Blue border */
+        color: #333 !important; /* Dark text inside */
     }
 </style>
 """
-
-st.markdown(SOUTHWEST_CSS, unsafe_allow_html=True)
-
 st.markdown(SOUTHWEST_CSS, unsafe_allow_html=True)
 
 # --- FORCE expander headers to be white-on-blue, no matter what ---
@@ -215,10 +238,12 @@ if 'selected_flight' not in st.session_state:
     st.session_state.selected_flight = None
 
 # --- LOGO & TITLE SECTION ---
-# Official Southwest Logo (Transparent PNG)
-st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=250)
+col_logo, col_text = st.columns([1, 4])
+with col_logo:
+    # Logo
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=200)
 
-# Removed the plane emoji since the logo is now there
+st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
 st.title("Flight Delay Predictor")
 
 # Check if CSV data is available
@@ -510,75 +535,56 @@ elif st.session_state.page == 'result':
                 st.write("Standard conditions.")
     
 # --- FINAL SECTION: DETAILS & WEATHER SIDE-BY-SIDE ---
-    st.markdown("---")
+## --- FINAL SECTION: CARDS UI (FIXED) ---
+    st.markdown("<br>", unsafe_allow_html=True) # Spacer
     
-    # Create two equal columns
     c_details, c_weather = st.columns(2)
     
-    # --- LEFT COLUMN: FLIGHT DETAILS ---
+    # --- LEFT CARD: FLIGHT DETAILS ---
     with c_details:
-        st.markdown("### ✈️ Flight Details")
         if HAS_PANDAS:
+            # Prepare data variables
             dep_time_str = f"{int(flight['dep_time']):04d}"
             formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
-            
             origin_name = data['Origin'].classes_[int(float(flight['origin']))]
             dest_name = data['Origin'].classes_[int(float(flight['dest']))]
             distance_val = f"{int(float(flight['distance']))}"
             
-            # Flight Details HTML Table
-            table_html = f"""
-            <style>
-                .details-table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                }}
-                .details-table td {{
-                    padding: 8px 5px;
-                    border-bottom: 1px solid #e0e0e0;
-                    font-size: 0.9rem;
-                }}
-                .details-label {{
-                    font-weight: 700;
-                    color: #304CB2;
-                    width: 40%;
-                }}
-                .details-value {{
-                    color: #333333;
-                    text-align: right;
-                }}
-            </style>
-            
-            <table class="details-table">
-                <tr><td class="details-label">Flight Number</td><td class="details-value">{flight['flight_num']}</td></tr>
-                <tr><td class="details-label">Origin</td><td class="details-value">{origin_name}</td></tr>
-                <tr><td class="details-label">Destination</td><td class="details-value">{dest_name}</td></tr>
-                <tr><td class="details-label">Distance</td><td class="details-value">{distance_val} miles</td></tr>
-                <tr><td class="details-label">Departure Time</td><td class="details-value">{formatted_dep_time}</td></tr>
-                <tr><td class="details-label">Date</td><td class="details-value">{flight['date']}</td></tr>
-            </table>
+            # BUILD THE WHOLE CARD AS ONE STRING
+            flight_card_html = f"""
+            <div class="stCard">
+                <h3>✈️ Flight Details</h3>
+                <table class="details-table" style="width:100%">
+                    <tr><td class="details-label">Flight No</td><td class="details-value">{flight['flight_num']}</td></tr>
+                    <tr><td class="details-label">Route</td><td class="details-value">{origin_name} ➝ {dest_name}</td></tr>
+                    <tr><td class="details-label">Distance</td><td class="details-value">{distance_val} mi</td></tr>
+                    <tr><td class="details-label">Departs</td><td class="details-value">{formatted_dep_time}</td></tr>
+                    <tr><td class="details-label">Date</td><td class="details-value">{flight['date']}</td></tr>
+                </table>
+            </div>
             """
-            st.markdown(table_html, unsafe_allow_html=True)
+            st.markdown(flight_card_html, unsafe_allow_html=True)
 
-    # --- RIGHT COLUMN: WEATHER DATA ---
+    # --- RIGHT CARD: WEATHER REPORT ---
     with c_weather:
-        st.markdown("### ☁️ Weather Data")
+        # Prepare data variables
+        temp_f = (weather['tavg'] * 9/5) + 32
+        prcp_in = weather['prcp'] * 0.03937
+        snow_in = weather['snow'] * 0.03937
+        wspd_mph = weather['wspd'] * 0.621371
+        pres_in = weather['pres'] * 0.02953
         
-        # Conversions: Imperial Units
-        temp_f = (weather['tavg'] * 9/5) + 32          # Whole number
-        prcp_in = weather['prcp'] * 0.03937            # 1 decimal
-        snow_in = weather['snow'] * 0.03937            # 1 decimal
-        wspd_mph = weather['wspd'] * 0.621371          # 1 decimal
-        pres_in = weather['pres'] * 0.02953            # 1 decimal
-        
-        # Weather Data HTML Table (Reuses styles from above)
-        weather_html = f"""
-        <table class="details-table">
-            <tr><td class="details-label">Temperature</td><td class="details-value">{temp_f:.0f} °F</td></tr>
-            <tr><td class="details-label">Precipitation</td><td class="details-value">{prcp_in:.1f} in</td></tr>
-            <tr><td class="details-label">Snow</td><td class="details-value">{snow_in:.1f} in</td></tr>
-            <tr><td class="details-label">Wind Speed</td><td class="details-value">{wspd_mph:.1f} mph</td></tr>
-            <tr><td class="details-label">Pressure</td><td class="details-value">{pres_in:.1f} inHg</td></tr>
-        </table>
+        # BUILD THE WHOLE CARD AS ONE STRING
+        weather_card_html = f"""
+        <div class="stCard" style="border-top: 5px solid #FFB612;">
+            <h3>☁️ Weather Report</h3>
+            <table class="details-table" style="width:100%">
+                <tr><td class="details-label">Temp</td><td class="details-value">{temp_f:.0f} °F</td></tr>
+                <tr><td class="details-label">Wind</td><td class="details-value">{wspd_mph:.1f} mph</td></tr>
+                <tr><td class="details-label">Precip</td><td class="details-value">{prcp_in:.1f} in</td></tr>
+                <tr><td class="details-label">Pressure</td><td class="details-value">{pres_in:.1f} inHg</td></tr>
+                <tr><td class="details-label">Snow</td><td class="details-value">{snow_in:.1f} in</td></tr>
+            </table>
+        </div>
         """
-        st.markdown(weather_html, unsafe_allow_html=True)
+        st.markdown(weather_card_html, unsafe_allow_html=True)
