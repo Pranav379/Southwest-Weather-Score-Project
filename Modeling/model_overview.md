@@ -12,14 +12,14 @@ Extensive data preparation was performed, including:
 *   **Objective**: Predict log-transformed `DepDelayMinutes`.
 *   **Data Split**: Time-based split (train: <=2023-12-31, valid: 2024-01-01 to 2024-12-31, test: >2024-12-31).
 *   **Hyperparameter Tuning**: Optuna was used to minimize MAE on the *original scale* of `DepDelayMinutes` with early stopping.
-*   **Evaluation**: On the test set, achieved MAE of `11.83` minutes, RMSE of `26.24` minutes, and R² of `0.6385` (on original scale). Log space R² was `0.7811`.
+*   **Evaluation**: On the test set, achieved MAE of `12.20` minutes, RMSE of `30.96` minutes, and R² of `-0.0433` (on original scale). Log space R² was `0.1933`.
 *   **Insights**: Top features included wind speed, average temperature, and distance.
 
 ### Random Forest Model (Classification)
 *   **Objective**: Classify `DepDel15` (flight delay >= 15 minutes).
 *   **Class Imbalance**: Handled using `class_weight='balanced'`.
 *   **Hyperparameter Tuning**: Optuna maximized ROC-AUC, with training on a sampled dataset for efficiency.
-*   **Evaluation**: Performance was assessed using Accuracy, Recall, Precision, and ROC-AUC, supported by Confusion Matrix and ROC curve plots.
+*   **Evaluation**: Performance was assessed using Accuracy, Recall, Precision, and ROC-AUC, supported by Confusion Matrix and ROC curve plots. The model achieved an accuracy score of `0.0600`, a recall score of `0.747`, a precision score of `0.319`, and a ROC-AUC score of `0.707`
 
 ### Neural Network Model (Regression)
 *   **Architecture**: Keras Sequential model with input layer, three dense hidden layers (128, 64, 32 units, ReLU activation), and a single output unit.
@@ -39,3 +39,4 @@ To reproduce results, ensure:
 2.  **Sequential Execution**: Run all notebook cells in order.
 3.  **Random Seed Management**: Fixed `random_state` values are used across models and data splits for consistent outcomes.
 4.  **Colab Environment**: Designed for Google Colaboratory to minimize environmental discrepancies.
+

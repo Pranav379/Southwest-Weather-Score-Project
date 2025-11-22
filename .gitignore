@@ -1,5 +1,7 @@
 # Large data files
-Data/
+input_data.csv
+FINAL_DATASET.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

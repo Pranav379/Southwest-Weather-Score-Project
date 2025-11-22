@@ -1,6 +1,2 @@
-<<<<<<< HEAD
 *.csv filter=lfs diff=lfs merge=lfs -text
 *.xlsx filter=lfs diff=lfs merge=lfs -text
-=======
-*.ipynb filter=lfs diff=lfs merge=lfs -text
->>>>>>> 04660cdad026a67da1a44a9b3cf507da0de6536c
