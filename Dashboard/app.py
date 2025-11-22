@@ -58,28 +58,46 @@ TEST_DATA_DF = load_data(CSV_FILE_PATH)
 # ==========================================
 SOUTHWEST_CSS = """
 <style>
+    /* 1. Global Reset */
     * {
         box-sizing: border-box;
     }
 
-    /* ===== App Background & Layout ===== */
+    /* 2. Main App Background & Text */
     [data-testid="stAppViewContainer"] {
         background-color: #f8f9fa !important;
         color: #333333 !important;
     }
-
+    
     [data-testid="stHeader"] {
         background-color: rgba(0,0,0,0) !important;
     }
 
-    /* ===== Typography ===== */
+    /* 3. WIDGET LABELS ( The Fix ) */
+    /* Target the container and every possible child element */
+    [data-testid="stWidgetLabel"],
+    [data-testid="stWidgetLabel"] > div,
+    [data-testid="stWidgetLabel"] > label,
+    [data-testid="stWidgetLabel"] p {
+        color: #304CB2 !important; /* Southwest Blue */
+        font-size: 1.1rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* 4. Selectbox Input Text (The text inside the box) */
+    div[data-baseweb="select"] > div {
+        color: #333333 !important; /* Dark grey text */
+        background-color: #ffffff !important; /* White background */
+    }
+
+    /* 5. Headings */
     h1, h2, h3 {
-        color: #304CB2 !important;  /* Southwest Blue */
+        color: #304CB2 !important;
         font-family: 'Arial', sans-serif;
         font-weight: 800;
     }
 
-    /* ===== Score Box ===== */
+    /* 6. Score Box Styling */
     .score-container {
         background: linear-gradient(145deg, #304CB2, #1e327a);
         color: #ffffff;
@@ -89,7 +107,6 @@ SOUTHWEST_CSS = """
         margin: 20px 0;
         box-shadow: 0 10px 30px rgba(48, 76, 178, 0.2);
     }
-
     .score-label {
         font-size: 0.9rem;
         text-transform: uppercase;
@@ -97,92 +114,28 @@ SOUTHWEST_CSS = """
         opacity: 0.85;
         margin-bottom: 15px;
         font-weight: 600;
+        color: #ffffff !important; /* Force white text inside blue box */
     }
-
     .big-score {
         font-size: 3.5rem;
         font-weight: 900;
-        color: #FFB612;  /* Southwest Yellow */
+        color: #FFB612 !important;
         line-height: 1;
         margin: 10px 0;
     }
 
-    /* ===== Divider ===== */
-    hr {
-        border: none;
-        border-top: 2px solid #e0e0e0;
-        margin: 30px 0;
-    }
-
-    /* ===== Expander Bodies (inner content) ===== */
-    /* Keep content dark-on-light for readability */
-    .stExpander > div > div {
-        color: #333333 !important;
-        background-color: #ffffff !important;
-    }
-
-    /* ===== Buttons ===== */
+    /* 7. Buttons */
     button {
         background-color: #304CB2 !important;
         color: #ffffff !important;
         font-weight: 600 !important;
     }
-
     button:hover {
         background-color: #1e327a !important;
     }
-
-    /* ===== DataFrame Styling ===== */
-    /* Header */
-    div.stDataFrame table thead {
-        background-color: #304CB2 !important;  /* Southwest Blue */
-    }
-
-    div.stDataFrame table thead th {
-        color: #FFB612 !important;            /* Southwest Yellow */
-        font-weight: 700 !important;
-    }
-
-    /* Body rows */
-    div.stDataFrame table tbody tr {
-        background-color: #333333 !important;  /* Dark background */
-    }
-
-    div.stDataFrame table tbody td {
-        color: #ffffff !important;             /* White text */
-    }
-
-    /* =========================================================
-       EXPANDER HEADERS (title + icon) - handle old & new DOM
-       ========================================================= */
-
-    /* Old layout: header in first child div */
-    div[data-testid="stExpander"] > div:first-child {
-        background-color: #1e327a !important;
-        border-radius: 8px !important;
-    }
-
-    div[data-testid="stExpander"] > div:first-child * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-        font-weight: 600 !important;
-    }
-
-    /* New layout: <details data-testid="stExpander"><summary>...</summary> */
-    details[data-testid="stExpander"] > summary {
-        background-color: #1e327a !important;
-        border-radius: 8px !important;
-        list-style: none;  /* hide default marker if any */
-    }
-
-    details[data-testid="stExpander"] > summary * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-        font-weight: 600 !important;
-    }
-
-    /* Ensure the summary itself (text node) is also white */
-    details[data-testid="stExpander"] > summary {
+    
+    /* 8. Expander/Details Fixes */
+    summary {
         color: #ffffff !important;
     }
 </style>
@@ -289,23 +242,57 @@ if st.session_state.page == 'landing':
         key="flight_select"
     )
     
-    # Step 2: Get all routes for this flight number
+# Step 2: Get all routes for this flight number
     matching_rows = []
     for index, row in TEST_DATA_DF.iterrows():
+        # Handle flight number matching (same as before)
         flight_num = row.get('Flight_Number_Reporting_Airline', 'N/A')
         if flight_num != 'N/A':
             try:
                 flight_num = f"WN{int(float(flight_num))}"
             except:
                 flight_num = f"WN{flight_num}"
+        
         if flight_num == selected_flight_num:
-            origin = row.get('Origin', 'N/A')
-            dest = row.get('Dest', 'N/A')
-            route_label = f"{origin} → {dest}"
-            matching_rows.append({
-                'label': route_label,
-                'index': index
-            })
+            # --- START OF FIX ---
+            try:
+                raw_origin = row.get('Origin', 'N/A')
+                raw_dest = row.get('Dest', 'N/A')
+                
+                # Logic: 
+                # 1. Try to treat it as a number (e.g. 8.0) and decode it.
+                # 2. If that fails (ValueError), it might already be a name (e.g. "LBB").
+                # 3. If decoding fails (IndexError), SKIP it.
+                
+                try:
+                    # Attempt to convert to int index and decode
+                    origin_idx = int(float(raw_origin))
+                    dest_idx = int(float(raw_dest))
+                    
+                    origin_name = data['Origin'].classes_[origin_idx]
+                    dest_name = data['Origin'].classes_[dest_idx]
+                except ValueError:
+                    # It wasn't a number, so assume it's already a text name (e.g. "LBB")
+                    origin_name = str(raw_origin)
+                    dest_name = str(raw_dest)
+                
+                # Final sanity check: If the result is still just a number string, skip it
+                # (This filters out cases where decode failed and left us with "3.0")
+                if origin_name.replace('.', '', 1).isdigit():
+                    continue 
+
+                route_label = f"{origin_name} → {dest_name}"
+                
+                matching_rows.append({
+                    'label': route_label,
+                    'index': index
+                })
+
+            except Exception:
+                # If anything goes wrong, SKIP this row entirely. 
+                # Do not show raw numbers.
+                continue
+            # --- END OF FIX ---
     
     # Remove duplicates but keep index
     unique_routes = []
@@ -428,7 +415,7 @@ elif st.session_state.page == 'result':
     with col_status:
         st.markdown(f"### {status_title}")
         st.write(status_msg)
-    
+    '''
     st.markdown("---")
     st.markdown("### Contributing Factors")
     
@@ -484,9 +471,9 @@ elif st.session_state.page == 'result':
                 'Property': ['Flight Number', 'Origin', 'Destination', 'Distance (miles)', 'Departure Time', 'Date', 'Record Index'],
                 'Value': [
                     flight['flight_num'],
-                    data['Origin'].classes_[int(flight['origin'])],
-                    data['Origin'].classes_[int(flight['dest'])],
-                    f"{int(flight['distance'])}",
+                    data['Origin'].classes_[int(float(flight['origin']))],  # Changed here
+                    data['Origin'].classes_[int(float(flight['dest']))],    # Change this too just in case
+                    f"{int(float(flight['distance']))}",                    # And likely here
                     formatted_dep_time,
                     flight['date'],
                     flight['id']
@@ -502,3 +489,4 @@ elif st.session_state.page == 'result':
                 'Value': [f"{weather['tavg']:.1f}", f"{weather['prcp']:.1f}", f"{weather['snow']:.1f}", f"{weather['wspd']:.1f}", f"{weather['pres']:.1f}"]
             }
             st.dataframe(pd.DataFrame(debug_data), use_container_width=True)
+    '''
