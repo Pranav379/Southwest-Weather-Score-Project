@@ -1,4 +1,5 @@
 streamlit
+<<<<<<< HEAD
 pandas>=2.1.0
 numpy>=1.26.0
 matplotlib>=3.8.0
@@ -8,3 +9,13 @@ seaborn>=0.13.0
 =======
 seaborn>=0.13.0
 >>>>>>> 04660cdad026a67da1a44a9b3cf507da0de6536c
+=======
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+lightgbm
+tensorflow
+airports-py
+>>>>>>> 80db84f33d491d67e6d4ab9e7f24f07d3aa94437
