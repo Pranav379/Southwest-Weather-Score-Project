@@ -1,6 +1,12 @@
 import streamlit as st
 import datetime
 import os
+import pickle
+
+# configure encoders
+with open('label_encoders.pkl', 'rb') as file:
+    data = pickle.load(file)
+
 
 # ==========================================
 # 1. APP CONFIGURATION & SAFE IMPORTS
@@ -478,8 +484,8 @@ elif st.session_state.page == 'result':
                 'Property': ['Flight Number', 'Origin', 'Destination', 'Distance (miles)', 'Departure Time', 'Date', 'Record Index'],
                 'Value': [
                     flight['flight_num'],
-                    flight['origin'],
-                    flight['dest'],
+                    data['Origin'].classes_[int(flight['origin'])],
+                    data['Origin'].classes_[int(flight['dest'])],
                     f"{int(flight['distance'])}",
                     formatted_dep_time,
                     flight['date'],
