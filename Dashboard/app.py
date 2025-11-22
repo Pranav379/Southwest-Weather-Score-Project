@@ -553,8 +553,18 @@ elif st.session_state.page == 'result':
     # 1. PREPARE DATA (Do this before columns so both cards can use it)
     if HAS_PANDAS:
         # Decode Airport Names
-        origin_name = data['Origin'].classes_[int(float(flight['origin']))]
-        dest_name = data['Origin'].classes_[int(float(flight['dest']))]
+        origin_iata = data['Origin'].classes_[int(float(flight['origin']))]
+        dest_iata = data['Origin'].classes_[int(float(flight['dest']))]
+
+        # load airport data
+        airports = airportsdata.load('IATA') 
+        originInfo = airports.get(origin_iata)
+        destInfo = airports.get(dest_iata)
+
+        # format origin and destination
+        originDisplay = originInfo['name'] + " (" + origin_iata + ")"
+        destDisplay = destInfo['name'] + " (" + dest_iata + ")"
+        
         
         # Format Times & Distances
         dep_time_str = f"{int(flight['dep_time']):04d}"
@@ -579,7 +589,7 @@ elif st.session_state.page == 'result':
             <h3>✈️ Flight Details</h3>
             <table class="details-table" style="width:100%">
                 <tr><td class="details-label">Flight No</td><td class="details-value">{flight['flight_num']}</td></tr>
-                <tr><td class="details-label">Route</td><td class="details-value">{origin_name} ➝ {dest_name}</td></tr>
+                <tr><td class="details-label">Route</td><td class="details-value">{originDisplay} ➝ {destDisplay}</td></tr>
                 <tr><td class="details-label">Distance</td><td class="details-value">{distance_val} mi</td></tr>
                 <tr><td class="details-label">Departs</td><td class="details-value">{formatted_dep_time}</td></tr>
                 <tr><td class="details-label">Date</td><td class="details-value">{flight['date']}</td></tr>
