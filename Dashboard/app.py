@@ -410,19 +410,33 @@ elif st.session_state.page == 'result':
                 value=risk_score,
                 domain={'x': [0, 1], 'y': [0, 1]},
                 gauge={
-                    'axis': {'range': [0, 100]},
+                    'axis': {
+                        'range': [0, 100],
+                        'tickmode': 'array',
+                        # Added 25 and 75 to the values and labels
+                        'tickvals': [0, 25, 50, 75, 100],
+                        'ticktext': ['0', '25', '50', '75', '100'],
+                        'tickfont': {'size': 14, 'color': '#000000'},
+                    },
                     'bar': {'color': status_color},
                     'bgcolor': "white",
                     'steps': [
-                        {'range': [0, 10], 'color': '#e8f5e9'},   # Very Low (Pale Green)
-                        {'range': [10, 30], 'color': '#f1f8e9'},  # Low (Very Pale Green)
-                        {'range': [30, 60], 'color': '#fff8e1'},  # Moderate (Pale Yellow)
-                        {'range': [60, 80], 'color': '#fbe9e7'},  # High (Pale Orange)
-                        {'range': [80, 100], 'color': '#ffebee'}  # Very High (Pale Red)
+                        {'range': [0, 10], 'color': '#e8f5e9'},
+                        {'range': [10, 30], 'color': '#f1f8e9'},
+                        {'range': [30, 60], 'color': '#fff8e1'},
+                        {'range': [60, 80], 'color': '#fbe9e7'},
+                        {'range': [80, 100], 'color': '#ffebee'}
                     ]
                 }
             ))
-            fig.update_layout(height=250, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
+            
+            # Margins kept wide so numbers don't get cut off
+            fig.update_layout(
+                height=250, 
+                margin=dict(l=40, r=40, t=20, b=20), 
+                paper_bgcolor="rgba(0,0,0,0)"
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
     
     with col_status:
