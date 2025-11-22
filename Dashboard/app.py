@@ -588,7 +588,7 @@ elif st.session_state.page == 'result':
         <div class="stCard">
             <h3>✈️ Flight Details</h3>
             <table class="details-table" style="width:100%">
-                <tr><td class="details-label">Flight No</td><td class="details-value">{flight['flight_num']}</td></tr>
+                <tr><td class="details-label">Flight No.</td><td class="details-value">{flight['flight_num']}</td></tr>
                 <tr><td class="details-label">Route</td><td class="details-value">{originDisplay} ➝ {destDisplay}</td></tr>
                 <tr><td class="details-label">Distance</td><td class="details-value">{distance_val} mi</td></tr>
                 <tr><td class="details-label">Departs</td><td class="details-value">{formatted_dep_time}</td></tr>
@@ -606,10 +606,10 @@ elif st.session_state.page == 'result':
             <h3>☁️ Weather at {origin_name}</h3>
             <table class="details-table" style="width:100%">
                 <tr><td class="details-label">Temp</td><td class="details-value">{temp_f:.0f} °F</td></tr>
-                <tr><td class="details-label">Wind</td><td class="details-value">{wspd_mph:.1f} mph</td></tr>
-                <tr><td class="details-label">Precip</td><td class="details-value">{prcp_in:.1f} in</td></tr>
-                <tr><td class="details-label">Pressure</td><td class="details-value">{pres_in:.1f} inHg</td></tr>
-                <tr><td class="details-label">Snow</td><td class="details-value">{snow_in:.1f} in</td></tr>
+                <tr><td class="details-label">Wind</td><td class="details-value">{f'0 mph' if wspd_mph == 0 else f'{wspd_mph:.1f} mph'}</td></tr>
+                <tr><td class="details-label">Precip</td><td class="details-value">{f'0 in' if prcp_in == 0 else f'{prcp_in:.1f} in'}</td></tr>
+                <tr><td class="details-label">Pressure</td><td class="details-value">{f'0 inHg' if pres_in == 0 else f'{pres_in:.1f} inHg'}</td></tr>
+                <tr><td class="details-label">Snow</td><td class="details-value">{f'0 in' if snow_in == 0 else f'{snow_in:.1f} in'}</td></tr>
             </table>
         </div>
         """
