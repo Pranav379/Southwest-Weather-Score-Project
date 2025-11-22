@@ -261,7 +261,7 @@ if st.session_state.page == 'landing':
         <div style='
             text-align: left; 
             color: #000000; 
-            font-size: 28px; 
+            font-size: 20px; 
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-weight: 800; 
             margin-bottom: 20px; 
