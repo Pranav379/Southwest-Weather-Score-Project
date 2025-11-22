@@ -238,13 +238,14 @@ if 'selected_flight' not in st.session_state:
     st.session_state.selected_flight = None
 
 # --- LOGO & TITLE SECTION ---
-col_logo, col_text = st.columns([1, 4])
+col_logo, col_text = st.columns([2, 2])
 with col_logo:
-    # Logo
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=200)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=500)
 
 st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
-st.title("Flight Delay Predictor")
+
+# UPDATED: Added Plane Emoji ✈️
+st.title("Flight Delay Predictor ✈️")
 
 # Check if CSV data is available
 if TEST_DATA_DF is None:
