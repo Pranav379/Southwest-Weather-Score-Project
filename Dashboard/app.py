@@ -264,7 +264,7 @@ if st.session_state.page == 'landing':
             font-size: 20px; 
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-weight: 800; 
-            margin-bottom: 20px; 
+            margin-bottom: 50px; 
         '>
             Enter your flight number to get started!
         </div>
