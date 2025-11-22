@@ -365,13 +365,7 @@ elif st.session_state.page == 'result':
         st.session_state.page = 'landing'
         st.session_state.selected_flight = None
         st.rerun()
-    
-    # Data Source Badge
-    col_title, col_badge = st.columns([3, 1])
-    with col_title:
-        st.markdown(f"## Analysis for {flight['flight_num']}")
-    with col_badge:
-        st.success("CSV Data")
+
     
     weather = flight['weather_raw']
     # Use the actual CSV weather score instead of calculating
@@ -384,23 +378,30 @@ elif st.session_state.page == 'result':
         <div class="big-score">{risk_score:.1f}</div>
     </div>
     """, unsafe_allow_html=True)
-    st.caption("Source: CSV Dataset")
     
     # Status and gauge
     col_gauge, col_status = st.columns([1, 1])
     
     if risk_score <= 10:
-        status_color = "#4CAF50"
+        status_color = "#4CAF50"  # Green
         status_title = "✅ Very Low Risk"
         status_msg = "Excellent conditions. Expect on-time departure."
-    elif risk_score < 40:
-        status_color = "#FFB612"
+    elif risk_score <= 30:
+        status_color = "#8BC34A"  # Light Green
+        status_title = "🟢 Low Risk"
+        status_msg = "Good conditions, though minor weather factors are present."
+    elif risk_score <= 60:
+        status_color = "#FFB612"  # Yellow/Orange
         status_title = "⚠️ Moderate Risk"
-        status_msg = "Some weather factors present, but low to moderate delay risk."
-    else:
-        status_color = "#C60C30"
+        status_msg = "Weather factors present. Potential for minor delays."
+    elif risk_score <= 80:
+        status_color = "#FF5722"  # Orange/Red
         status_title = "🚨 High Risk"
-        status_msg = "Significant poor weather. Delays likely."
+        status_msg = "Poor weather conditions. Delays are likely."
+    else:
+        status_color = "#C60C30"  # Deep Red
+        status_title = "⛔ Very High Risk"
+        status_msg = "Severe weather. Significant delays or cancellations expected."
     
     with col_gauge:
         if HAS_PLOTTING:
@@ -413,9 +414,11 @@ elif st.session_state.page == 'result':
                     'bar': {'color': status_color},
                     'bgcolor': "white",
                     'steps': [
-                        {'range': [0, 10], 'color': '#e8f5e9'},
-                        {'range': [10, 40], 'color': '#fff8e1'},
-                        {'range': [40, 100], 'color': '#ffebee'}
+                        {'range': [0, 10], 'color': '#e8f5e9'},   # Very Low (Pale Green)
+                        {'range': [10, 30], 'color': '#f1f8e9'},  # Low (Very Pale Green)
+                        {'range': [30, 60], 'color': '#fff8e1'},  # Moderate (Pale Yellow)
+                        {'range': [60, 80], 'color': '#fbe9e7'},  # High (Pale Orange)
+                        {'range': [80, 100], 'color': '#ffebee'}  # Very High (Pale Red)
                     ]
                 }
             ))
@@ -432,18 +435,27 @@ elif st.session_state.page == 'result':
     col_inc, col_dec = st.columns(2)
     
     with col_inc:
-        # Note: Content inside expanders remains dark text on white background for this section,
-        # as a fully dark mode requires more extensive CSS changes than requested.
+        # Note: Content inside expanders remains dark text on white background
         with st.expander("📈 Factors INCREASING Risk", expanded=True):
             risks = []
+            
+            # LOGIC remains in Metric (to match data), DISPLAY converts to Imperial
             if weather['wspd'] > 25:
-                risks.append(f"• High Winds ({weather['wspd']:.1f} km/h)")
+                wspd_mph = weather['wspd'] * 0.621371
+                risks.append(f"• High Winds ({wspd_mph:.1f} mph)")
+            
             if weather['pres'] < 1005:
-                risks.append(f"• Low Pressure ({weather['pres']:.1f} hPa)")
+                pres_in = weather['pres'] * 0.02953
+                risks.append(f"• Low Pressure ({pres_in:.1f} inHg)")
+            
             if weather['prcp'] > 0:
-                risks.append(f"• Precipitation ({weather['prcp']:.1f} mm)")
+                prcp_in = weather['prcp'] * 0.03937
+                risks.append(f"• Precipitation ({prcp_in:.1f} in)")
+            
             if weather['snow'] > 0:
-                risks.append(f"• Snowfall ({weather['snow']:.1f} mm)")
+                snow_in = weather['snow'] * 0.03937
+                risks.append(f"• Snowfall ({snow_in:.1f} in)")
+            
             if flight['distance'] > 2000:
                 risks.append("• Long Haul Flight")
             if flight['dep_time'] > 1800:
@@ -461,7 +473,7 @@ elif st.session_state.page == 'result':
             if 15 < weather['tavg'] < 30:
                 # Convert to Fahrenheit for display
                 temp_f = (weather['tavg'] * 9/5) + 32
-                goods.append(f"• Mild Temps ({temp_f:.1f}°F)")
+                goods.append(f"• Mild Temps ({temp_f:.0f}°F)")
             
             if weather['wspd'] < 15:
                 goods.append("• Calm Winds")
@@ -475,11 +487,16 @@ elif st.session_state.page == 'result':
             else:
                 st.write("Standard conditions.")
     
-    # Flight Details Card
+# --- FINAL SECTION: DETAILS & WEATHER SIDE-BY-SIDE ---
     st.markdown("---")
-    with st.expander("✈️ Flight Details", expanded=False):
+    
+    # Create two equal columns
+    c_details, c_weather = st.columns(2)
+    
+    # --- LEFT COLUMN: FLIGHT DETAILS ---
+    with c_details:
+        st.markdown("### ✈️ Flight Details")
         if HAS_PANDAS:
-            # 1. Prepare the data variables
             dep_time_str = f"{int(flight['dep_time']):04d}"
             formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
             
@@ -487,7 +504,7 @@ elif st.session_state.page == 'result':
             dest_name = data['Origin'].classes_[int(float(flight['dest']))]
             distance_val = f"{int(float(flight['distance']))}"
             
-            # 2. Create a custom HTML table (No headers, just data)
+            # Flight Details HTML Table
             table_html = f"""
             <style>
                 .details-table {{
@@ -495,13 +512,13 @@ elif st.session_state.page == 'result':
                     border-collapse: collapse;
                 }}
                 .details-table td {{
-                    padding: 10px 5px;
+                    padding: 8px 5px;
                     border-bottom: 1px solid #e0e0e0;
-                    font-size: 0.95rem;
+                    font-size: 0.9rem;
                 }}
                 .details-label {{
                     font-weight: 700;
-                    color: #304CB2; /* Southwest Blue */
+                    color: #304CB2;
                     width: 40%;
                 }}
                 .details-value {{
@@ -519,44 +536,27 @@ elif st.session_state.page == 'result':
                 <tr><td class="details-label">Date</td><td class="details-value">{flight['date']}</td></tr>
             </table>
             """
-            
             st.markdown(table_html, unsafe_allow_html=True)
-    
-# Debug section
-    if st.checkbox("View Raw Weather Data"):
-        # Convert Temp to Fahrenheit
-        temp_f = (weather['tavg'] * 9/5) + 32
+
+    # --- RIGHT COLUMN: WEATHER DATA ---
+    with c_weather:
+        st.markdown("### ☁️ Weather Data")
         
-        # HTML Table implementation
+        # Conversions: Imperial Units
+        temp_f = (weather['tavg'] * 9/5) + 32          # Whole number
+        prcp_in = weather['prcp'] * 0.03937            # 1 decimal
+        snow_in = weather['snow'] * 0.03937            # 1 decimal
+        wspd_mph = weather['wspd'] * 0.621371          # 1 decimal
+        pres_in = weather['pres'] * 0.02953            # 1 decimal
+        
+        # Weather Data HTML Table (Reuses styles from above)
         weather_html = f"""
-        <style>
-            .debug-table {{
-                width: 100%;
-                border-collapse: collapse;
-            }}
-            .debug-table td {{
-                padding: 10px 5px;
-                border-bottom: 1px solid #e0e0e0;
-                font-size: 0.95rem;
-            }}
-            .debug-label {{
-                font-weight: 700;
-                color: #304CB2; /* Southwest Blue */
-                width: 50%;
-            }}
-            .debug-value {{
-                color: #333333;
-                text-align: right;
-                font-family: monospace;
-            }}
-        </style>
-        
-        <table class="debug-table">
-            <tr><td class="debug-label">Temperature</td><td class="debug-value">{temp_f:.1f} °F</td></tr>
-            <tr><td class="debug-label">Precipitation</td><td class="debug-value">{weather['prcp']:.1f} mm</td></tr>
-            <tr><td class="debug-label">Snow</td><td class="debug-value">{weather['snow']:.1f} mm</td></tr>
-            <tr><td class="debug-label">Wind Speed</td><td class="debug-value">{weather['wspd']:.1f} km/h</td></tr>
-            <tr><td class="debug-label">Pressure</td><td class="debug-value">{weather['pres']:.1f} hPa</td></tr>
+        <table class="details-table">
+            <tr><td class="details-label">Temperature</td><td class="details-value">{temp_f:.0f} °F</td></tr>
+            <tr><td class="details-label">Precipitation</td><td class="details-value">{prcp_in:.1f} in</td></tr>
+            <tr><td class="details-label">Snow</td><td class="details-value">{snow_in:.1f} in</td></tr>
+            <tr><td class="details-label">Wind Speed</td><td class="details-value">{wspd_mph:.1f} mph</td></tr>
+            <tr><td class="details-label">Pressure</td><td class="details-value">{pres_in:.1f} inHg</td></tr>
         </table>
         """
         st.markdown(weather_html, unsafe_allow_html=True)
