@@ -42,7 +42,7 @@ def load_data(file_path):
         return None
     try:
         # Load only first 5000 rows to speed up loading
-        df = pd.read_csv(file_path, nrows=50000)
+        df = pd.read_csv(file_path, nrows=5000)
         df.columns = df.columns.str.strip()
         return df
     except FileNotFoundError:
