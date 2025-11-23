@@ -1,12 +1,20 @@
-import streamlit as st
+\import streamlit as st
 import datetime
 import os
 import pickle
 import airportsdata
 
 # configure encoders
-with open('./Dashboard/label_encoders.pkl', 'rb') as file:
-    data = pickle.load(file)
+# Note: This assumes './Dashboard/label_encoders.pkl' exists relative to where the app is run.
+try:
+    with open('./Dashboard/label_encoders.pkl', 'rb') as file:
+        data = pickle.load(file)
+except FileNotFoundError:
+    st.error("Error: label_encoders.pkl not found. Please ensure the file is in the correct path.")
+    data = None # Set data to None if file not found
+except Exception as e:
+    st.error(f"Error loading label encoders: {e}")
+    data = None
 
 
 # ==========================================
@@ -27,6 +35,8 @@ try:
 except ImportError:
     HAS_PLOTTING = False
     HAS_PANDAS = False
+    st.error("Pandas or Plotly library is missing. Install them to run the app.")
+
 
 # ==========================================
 # 2. DATA LOADING
@@ -39,7 +49,6 @@ CSV_FILE_PATH = os.path.join(script_dir, 'reduced_exported_df.csv.gz')
 def load_data(file_path):
     """Safely loads the CSV data if available - only first 5000 rows for speed."""
     if not HAS_PANDAS:
-        st.error("Pandas library is required to load CSV data.")
         return None
     try:
         # Load only first 5000 rows to speed up loading
@@ -58,6 +67,13 @@ TEST_DATA_DF = load_data(CSV_FILE_PATH)
 # ==========================================
 if TEST_DATA_DF is not None and 'weatherScore' in TEST_DATA_DF.columns:
     TEST_DATA_DF = TEST_DATA_DF[TEST_DATA_DF['weatherScore'] > 0]
+elif TEST_DATA_DF is None:
+    st.error("Cannot load flight data. Stopping execution.")
+    st.stop()
+elif data is None:
+    st.error("Cannot load label encoders. Stopping execution.")
+    st.stop()
+
 
 # ==========================================
 # 3. SOUTHWEST STYLING (CSS) - THEME UPGRADE
@@ -241,6 +257,7 @@ if 'selected_flight' not in st.session_state:
 # --- LOGO & TITLE SECTION ---
 col_logo, col_text = st.columns([2, 3])
 with col_logo:
+    # Use st.image for better size control in a column
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Southwest_Airlines_logo_2014.svg/320px-Southwest_Airlines_logo_2014.svg.png", width=500)
 
 st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
@@ -248,15 +265,21 @@ st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
 # UPDATED: Added Plane Emoji ✈️
 st.title("Flight Delay Predictor ✈️")
 
-# Check if CSV data is available
+# Check if data is available before proceeding
 if TEST_DATA_DF is None:
     st.error("❌ CSV file not found!")
     st.info(f"Looking for: {CSV_FILE_PATH}")
     st.stop()
+if data is None:
+    st.stop() # already handled error above
 
 
 # --- PAGE 1: LANDING ---
 if st.session_state.page == 'landing':
+    
+    # FIX: Load airport data once for better dropdown display
+    airports = airportsdata.load('IATA') 
+
     # UPDATED: Changed <h2> to <div> to bypass global Blue styling
     st.markdown("""
         <div style='
@@ -311,20 +334,28 @@ if st.session_state.page == 'landing':
             raw_origin = row.get('Origin', 'N/A')
             raw_dest = row.get('Dest', 'N/A')
             
-            # 3. Try to decode names, but have a fallback!
+            # 3. FIX: Try to decode names with full airport details
             try:
-                # Attempt to look up the real names (e.g., "DAL", "HOU")
+                # Get IATA codes using the label encoder
                 origin_idx = int(float(raw_origin))
                 dest_idx = int(float(raw_dest))
                 
-                origin_name = data['Origin'].classes_[origin_idx]
-                dest_name = data['Origin'].classes_[dest_idx]
+                origin_iata = data['Origin'].classes_[origin_idx]
+                dest_iata = data['Origin'].classes_[dest_idx]
                 
-                route_label = f"{origin_name} → {dest_name}"
+                # Get full airport info
+                originInfo = airports.get(origin_iata)
+                destInfo = airports.get(dest_iata)
+                
+                # Build the user-friendly label
+                origin_display = f"{originInfo.get('name', origin_iata)} ({origin_iata})" if originInfo else origin_iata
+                dest_display = f"{destInfo.get('name', dest_iata)} ({dest_iata})" if destInfo else dest_iata
+                
+                route_label = f"{origin_display} → {dest_display}"
                 
             except Exception:
-                # --- THE FIX: Don't skip! Use raw values if lookup fails ---
-                # This ensures the dropdown is NEVER empty if data exists
+                # Fallback if label encoding or IATA lookup fails
+                # --- The FIX: Don't skip! Use raw values if lookup fails ---
                 route_label = f"Loc {raw_origin} → Loc {raw_dest}"
 
             matching_rows.append({
@@ -374,7 +405,7 @@ if st.session_state.page == 'landing':
             date_str = datetime.date(yy, mm, dd).strftime("%B %d, %Y")
         except Exception:
             # Fallback: If 'Month' is missing, stick to the old Quarter format
-            date_str = f"Q{selected_row.get('Quarter', 'N/A')} Day {selected_row.get('DayofMonth', 'N/A')}"   
+            date_str = f"Q{selected_row.get('Quarter', 'N/A')} Day {selected_row.get('DayofMonth', 'N/A')}"    
         # -----------------------------------
 
         flight_data = {
@@ -547,7 +578,6 @@ elif st.session_state.page == 'result':
             else:
                 st.write("Standard conditions.")
     
-# --- FINAL SECTION: DETAILS & WEATHER SIDE-BY-SIDE ---
 # --- FINAL SECTION: CARDS UI ---
     st.markdown("<br>", unsafe_allow_html=True) # Spacer
     
@@ -559,14 +589,23 @@ elif st.session_state.page == 'result':
 
         # load airport data
         airports = airportsdata.load('IATA') 
+        
+        # --- FIX: Use .get() and provide safe fallback ---
         originInfo = airports.get(origin_iata)
         destInfo = airports.get(dest_iata)
 
         # format origin and destination
-        originDisplay = originInfo['name'] + " (" + origin_iata + ")"
-        destDisplay = destInfo['name'] + " (" + dest_iata + ")"
-        
-        
+        if originInfo is None:
+            originDisplay = f"{origin_iata} (Info Missing)"
+        else:
+            originDisplay = originInfo['name'] + " (" + origin_iata + ")"
+            
+        if destInfo is None:
+            destDisplay = f"{dest_iata} (Info Missing)"
+        else:
+            destDisplay = destInfo['name'] + " (" + dest_iata + ")"
+        # ------------------------------------------------
+
         # Format Times & Distances
         dep_time_str = f"{int(flight['dep_time']):04d}"
         formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
