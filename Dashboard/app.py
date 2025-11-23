@@ -709,44 +709,60 @@ except ImportError:
 script_dir = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+CHUNK_SIZE = 11_000 
+filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
 
 @st.cache_data
 @st.cache_data
 def load_data(file_path):
     if not os.path.exists(file_path):
         st.error(f"File not found: {file_path}")
-        return None
+        return []
 
     collected = {yr: None for yr in TARGET_YEARS}  # store 1 flight per year
 
     try:
-        # Read CSV in chunks
-        chunks = pd.read_csv(file_path, chunksize=11_000)
-
-        for chunk in chunks:
+        for chunk in pd.read_csv(file_path, chunksize=CHUNK_SIZE):
             chunk.columns = chunk.columns.str.strip()
+
+            # Normalize flight numbers
+            chunk['flight_str'] = chunk['Flight_Number_Reporting_Airline'].apply(
+                lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
+            )
+
+            # Exclude filtered
+            chunk = chunk[~chunk['flight_str'].isin(filtered)]
+
             for yr in TARGET_YEARS:
                 if collected[yr] is not None:
-                    continue
-                df_year = chunk[chunk['Year'] == yr]
-                if not df_year.empty:
-                    collected[yr] = df_year.iloc[0]  # pick first flight
-            # Stop if we got 1 flight for every year
-            if all(v is not None for v in collected.values()):
+                    continue  # already got a flight
+
+                slice_yr = chunk[chunk['Year'] == yr]
+                if len(slice_yr) > 0:
+                    # Pick first flight with unique month-year
+                    slice_yr['month_year'] = slice_yr['Month'].astype(str) + '-' + slice_yr['Year'].astype(str)
+                    used_my = set()
+                    for idx, row in slice_yr.iterrows():
+                        my = row['month_year']
+                        if my not in used_my:
+                            collected[yr] = row['flight_str']
+                            used_my.add(my)
+                            break
+
+            # Stop if we already got one flight for each year
+            if all(collected[y] is not None for y in TARGET_YEARS):
                 break
 
-        # Combine into a DataFrame
-        df_list = [v for v in collected.values() if v is not None]
-        if df_list:
-            df = pd.DataFrame(df_list)
-            return df
-        else:
-            st.error("No flights found in the data.")
-            return None
+        # Collect final list
+        flights = [f for f in collected.values() if f is not None]
+
+        # Deterministic shuffle
+        flights = sorted(flights, key=lambda x: hash(x) % 1000)
+        return flights
 
     except Exception as e:
         st.error(f"Error loading data: {e}")
-        return None
+        return []
         
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
 
