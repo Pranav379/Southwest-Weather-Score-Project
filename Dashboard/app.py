@@ -474,7 +474,7 @@ elif st.session_state.page == 'result':
     elif risk_score <= 60:
         status_color = "#FFB612"  # Yellow/Orange
         status_title = "⚠️ Moderate Risk"
-        status_msg = "Weather factors present. Potential for minor delays."
+        status_msg = "Weather/time factors present. Potential for minor delays."
     elif risk_score <= 80:
         status_color = "#FF5722"  # Orange/Red
         status_title = "🚨 High Risk"
