@@ -712,62 +712,37 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 @st.cache_data
 @st.cache_data
 def load_data(file_path):
+    import pandas as pd, os, streamlit as st
+
+    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+    TARGET_PER_YEAR = 5
+
     if not os.path.exists(file_path):
         st.error(f"File not found: {file_path}")
         return None
-        
-    is_gzipped = file_path.endswith('.gz')
 
-    try:
-        # Try reading the first few rows to check file validity
-        test_df = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, nrows=5)
-        if test_df.empty:
-            st.error("CSV file is empty.")
-            return None
-    except Exception as e:
-        st.error(f"Error reading CSV: {e}")
-        return None
+    collected = []
 
-    # Define target years and max rows per year
-    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-    TARGET_ROWS_PER_YEAR = 200
-    collected = {yr: [] for yr in TARGET_YEARS}
+    # Read in chunks
+    chunks = pd.read_csv(file_path, chunksize=10_000)
 
-    try:
-        # Read in chunks (smaller chunk size if your large CSV caused issues)
-        chunksize = 50_000 if os.path.getsize(file_path) > 10_000_000 else 10_000
-        chunks = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, chunksize=chunksize)
+    for chunk in chunks:
+        chunk.columns = chunk.columns.str.strip()
+        for yr in TARGET_YEARS:
+            year_rows = chunk[chunk["Year"] == yr]
+            if not year_rows.empty:
+                take_n = min(len(year_rows), TARGET_PER_YEAR)
+                collected.append(year_rows.sample(take_n, random_state=42, replace=False))
 
-        for chunk in chunks:
-            # Clean column names
-            chunk.columns = chunk.columns.str.strip()
+        # Stop early if we have enough
+        if len(collected) >= len(TARGET_YEARS):
+            break
 
-            for yr in TARGET_YEARS:
-                if len(collected[yr]) >= TARGET_ROWS_PER_YEAR:
-                    continue
-
-                slice_yr = chunk[chunk["Year"] == yr]
-                if not slice_yr.empty:
-                    take_n = min(TARGET_ROWS_PER_YEAR - len(collected[yr]), len(slice_yr))
-                    collected[yr].append(slice_yr.sample(take_n, replace=False, random_state=42))
-
-            # Stop if enough rows collected
-            total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
-            if total_rows >= TARGET_ROWS_PER_YEAR * len(TARGET_YEARS):
-                break
-
-        # Combine collected rows into a single dataframe
-        frames = [pd.concat(collected[yr]) for yr in TARGET_YEARS if collected[yr]]
-        if frames:
-            df = pd.concat(frames, ignore_index=True)
-        else:
-            st.error("No valid data found in CSV.")
-            return None
-
+    if collected:
+        df = pd.concat(collected, ignore_index=True)
         return df
-
-    except Exception as e:
-        st.error(f"Error processing CSV: {e}")
+    else:
+        st.error("No data loaded.")
         return None
         
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
