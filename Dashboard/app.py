@@ -829,22 +829,30 @@ if st.session_state.page == 'landing':
         df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
             lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
         )
+    
+        # Exclude filtered flights
         df = df[~df['flight_str'].isin(filtered)]
     
+        # Target years
         target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-        picked_flights = []
     
+        # Pick 1 flight per year
+        selected_flights = []
+        used_month_years = set()
         for year in target_years:
             df_year = df[df['Year'] == year]
             if not df_year.empty:
-                # Pick first flight of the year (or random if you prefer deterministic)
-                flight = df_year.iloc[0]['flight_str']
-                picked_flights.append(flight)
+                # Pick the first flight that hasn’t been used in the same month+year
+                for idx, row in df_year.iterrows():
+                    my = f"{row['Month']}-{row['Year']}"
+                    if my not in used_month_years:
+                        selected_flights.append(row['flight_str'])
+                        used_month_years.add(my)
+                        break
     
-        # Optional: deterministic shuffle so the dropdown isn't always in year order
-        picked_flights = sorted(picked_flights, key=lambda x: hash(x) % 1000)
-    
-        return picked_flights
+        # Deterministic shuffle so dropdown order isn’t chronological
+        selected_flights = sorted(selected_flights, key=lambda x: hash(x) % 1000)
+        return selected_flights
     
     flight_numbers = get_sampled_flights(TEST_DATA_DF)
     selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
