@@ -993,7 +993,7 @@ elif st.session_state.page == 'result':
             if weather['wspd'] < 15:
                 goods.append("• Calm Winds")
             if weather['pres'] >= 1015:
-                goods.append("• High Pressure System")
+                goods.append("• Stable Pressure")
             if weather['prcp'] == 0:
                 goods.append("• No Precipitation")
             
