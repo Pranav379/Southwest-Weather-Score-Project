@@ -710,51 +710,63 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
+@st.cache_data
 def load_data(file_path):
     if not HAS_PANDAS:
         return None
+        
+    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+    
+    TARGET_ROWS_PER_YEAR = 5
+    
+    collected = {yr: [] for yr in TARGET_YEARS}
+    
+    if not os.path.exists(file_path):
+        st.error(f"File not found: {file_path}")
+        return None
+    
     try:
-        import pandas as pd
-
-        target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-
-        # Reading in chunks
+        # Read CSV in moderately large chunks
         chunks = pd.read_csv(
             file_path,
-            compression="gzip",
-            chunksize=200_000,
+            chunksize=50_000,
         )
-
-        sampled_frames = []
-
+    
         for chunk in chunks:
-            # Ensure column names are clean
             chunk.columns = chunk.columns.str.strip()
-
-            # Extract some rows for each desired year
-            for yr in target_years:
-                year_slice = chunk[chunk["Year"] == yr]
-
-                if len(year_slice) > 0:
-                    # Keep a small random sample from this chunk for the given year
-                    sampled_frames.append(
-                        year_slice.sample(
-                            n=min(10, len(year_slice)),
-                            replace = False,
-                            random_state=42
-                        )
+    
+            # Loop for each target year
+            for yr in TARGET_YEARS:
+                if len(collected[yr]) >= TARGET_ROWS_PER_YEAR:
+                    continue
+    
+                slice_yr = chunk[chunk["Year"] == yr]
+    
+                if len(slice_yr) > 0:
+                    take_n = min(200, len(slice_yr))
+                    collected[yr].append(
+                        slice_yr.sample(take_n, replace=False, random_state=42)
                     )
-        # Combine into a single dataframe
-        if sampled_frames:
-            df = pd.concat(sampled_frames, ignore_index=True)
+    
+            # Break if enough total data collected
+            total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
+            if total_rows >= 1000:   # enough for downstream sampling
+                break
+    
+        # Combine all into a single dataframe
+        frames = []
+        for yr in TARGET_YEARS:
+            if collected[yr]:
+                frames.append(pd.concat(collected[yr]))
+    
+        if frames:
+            df = pd.concat(frames, ignore_index=True)
         else:
-            # Fallback: small load
-            df = pd.read_csv(file_path, chunksize = 50)
-
+            # fallback: read a small amount
+            df = pd.read_csv(file_path, nrows=20000)
+    
         return df
-
-    except FileNotFoundError:
-        return None
+    
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return None
