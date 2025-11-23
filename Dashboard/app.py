@@ -797,19 +797,19 @@ if st.session_state.page == 'landing':
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
     def sample_flights_by_score(df):
-        unwanted = {"WN2933", "WN2759", "WN1889"}
+        filtered = {"WN2933", "WN2759", "WN1889", "WN28", "WN2606", "WN1582"}
         df = df.copy()
         
         # Normalize flight numbers
         df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
             lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A'
         )
-        df = df[~df['flight_str'].isin(unwanted)]
+        df = df[~df['flight_str'].isin(filtered)]
     
         selected_rows = []
     
         # Define new ranges and target counts: 6, 4, 3, 2, 1
-        ranges = [(0,10,6), (10,30,4), (30,60,3), (60,80,2), (80,100,1)]
+        ranges = [(0,10,6), (10,30,4), (30,60,2), (60,80,2), (80,100,1)]
     
         for low, high, n in ranges:
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
