@@ -715,7 +715,7 @@ def load_data(file_path):
     import pandas as pd, os, streamlit as st
 
     TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-    TARGET_PER_YEAR = 5
+    TARGET_PER_YEAR = 50
 
     if not os.path.exists(file_path):
         st.error(f"File not found: {file_path}")
