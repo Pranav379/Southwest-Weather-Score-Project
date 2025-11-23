@@ -722,7 +722,7 @@ def load_data(file_path):
         chunks = pd.read_csv(
             file_path,
             compression="gzip",
-            chunksize=50,
+            chunksize=200_000,
         )
 
         sampled_frames = []
@@ -739,7 +739,8 @@ def load_data(file_path):
                     # Keep a small random sample from this chunk for the given year
                     sampled_frames.append(
                         year_slice.sample(
-                            n=10,
+                            n=min(10, len(year_slice)),
+                            replace = False,
                             random_state=42
                         )
                     )
