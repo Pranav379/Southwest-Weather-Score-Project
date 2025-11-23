@@ -748,11 +748,11 @@ def load_data(file_path):
                         slice_yr.sample(take_n, replace=False, random_state=42)
                     )
     
-            # Break if enough total data collected
             total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
-            if total_rows >= 1000:   # enough for downstream sampling
-                break
-    
+            if all(len(pd.concat(collected[y])) >= TARGET_ROWS_PER_YEAR 
+                if collected[y] else False for y in TARGET_YEARS):
+                    break
+
         # Combine all into a single dataframe
         frames = []
         for yr in TARGET_YEARS:
