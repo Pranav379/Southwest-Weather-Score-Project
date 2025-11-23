@@ -711,49 +711,64 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
 @st.cache_data
-def get_sampled_flights(df):
-    filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
-    
-    # Normalize flight numbers
-    df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
-        lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
-    )
-    
-    # Exclude filtered flights
-    df = df[~df['flight_str'].isin(filtered)]
-    
-    # Helper: pick N flights from each year
-    def pick_flights(year_list, n):
-        df_sub = df[df['Year'].isin(year_list)].copy()
-        df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
-        picked = []
-        used_my = set()
-        for idx, row in df_sub.iterrows():
-            my = row['month_year']
-            if my not in used_my:
-                picked.append(row['flight_str'])
-                used_my.add(my)
-            if len(picked) >= n:
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        st.error(f"File not found: {file_path}")
+        return None
+        
+    is_gzipped = file_path.endswith('.gz')
+
+    try:
+        # Try reading the first few rows to check file validity
+        test_df = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, nrows=5)
+        if test_df.empty:
+            st.error("CSV file is empty.")
+            return None
+    except Exception as e:
+        st.error(f"Error reading CSV: {e}")
+        return None
+
+    # Define target years and max rows per year
+    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+    TARGET_ROWS_PER_YEAR = 200
+    collected = {yr: [] for yr in TARGET_YEARS}
+
+    try:
+        # Read in chunks (smaller chunk size if your large CSV caused issues)
+        chunksize = 50_000 if os.path.getsize(file_path) > 10_000_000 else 10_000
+        chunks = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, chunksize=chunksize)
+
+        for chunk in chunks:
+            # Clean column names
+            chunk.columns = chunk.columns.str.strip()
+
+            for yr in TARGET_YEARS:
+                if len(collected[yr]) >= TARGET_ROWS_PER_YEAR:
+                    continue
+
+                slice_yr = chunk[chunk["Year"] == yr]
+                if not slice_yr.empty:
+                    take_n = min(TARGET_ROWS_PER_YEAR - len(collected[yr]), len(slice_yr))
+                    collected[yr].append(slice_yr.sample(take_n, replace=False, random_state=42))
+
+            # Stop if enough rows collected
+            total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
+            if total_rows >= TARGET_ROWS_PER_YEAR * len(TARGET_YEARS):
                 break
-        return picked
-    
-    # Pick specific numbers from different years
-    flights_2024 = pick_flights([2024], 3)
-    flights_2023 = pick_flights([2023], 3)
-    flights_2015_2019 = pick_flights([2015, 2016, 2017, 2018, 2019], 3)
-    
-    all_flights = flights_2024 + flights_2023 + flights_2015_2019
-    
-    # Fill remaining up to 14 flights from any other years
-    remaining = df[~df['flight_str'].isin(all_flights)]
-    for idx, row in remaining.iterrows():
-        if len(all_flights) >= 14:
-            break
-        all_flights.append(row['flight_str'])
-    
-    # Shuffle deterministically
-    all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
-    return all_flights
+
+        # Combine collected rows into a single dataframe
+        frames = [pd.concat(collected[yr]) for yr in TARGET_YEARS if collected[yr]]
+        if frames:
+            df = pd.concat(frames, ignore_index=True)
+        else:
+            st.error("No valid data found in CSV.")
+            return None
+
+        return df
+
+    except Exception as e:
+        st.error(f"Error processing CSV: {e}")
+        return None
         
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
 
@@ -831,44 +846,45 @@ if st.session_state.page == 'landing':
     # --- FLIGHT SAMPLING FUNCTION ---
     def get_sampled_flights(df):
         filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
-    
-        # Convert flight numbers to normalized string
-        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
-    
+        
+        # Normalize flight numbers
+        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
+            lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
+        )
+        
         # Exclude filtered flights
         df = df[~df['flight_str'].isin(filtered)]
-    
-        # Helper to pick N flights from a given year range
-        def pick_flights(year_range, n):
-            df_sub = df[df['Year'].isin(year_range)]
-            # Ensure unique month+year
+        
+        # Helper: pick N flights from each year
+        def pick_flights(year_list, n):
+            df_sub = df[df['Year'].isin(year_list)].copy()
             df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
             picked = []
-            used_month_year = set()
+            used_my = set()
             for idx, row in df_sub.iterrows():
                 my = row['month_year']
-                if my not in used_month_year:
+                if my not in used_my:
                     picked.append(row['flight_str'])
-                    used_month_year.add(my)
+                    used_my.add(my)
                 if len(picked) >= n:
                     break
             return picked
-    
-        # Pick flights per rules
+        
+        # Pick specific numbers from different years
         flights_2024 = pick_flights([2024], 3)
         flights_2023 = pick_flights([2023], 3)
-        flights_2015_2019 = pick_flights([2015,2016,2017,2018,2019], 3)
-    
+        flights_2015_2019 = pick_flights([2015, 2016, 2017, 2018, 2019], 3)
+        
         all_flights = flights_2024 + flights_2023 + flights_2015_2019
-    
-        # If still <14, fill from remaining
+        
+        # Fill remaining up to 14 flights from any other years
         remaining = df[~df['flight_str'].isin(all_flights)]
         for idx, row in remaining.iterrows():
             if len(all_flights) >= 14:
                 break
             all_flights.append(row['flight_str'])
-    
-        # Shuffle deterministically without random library
+        
+        # Shuffle deterministically
         all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
         return all_flights
     
