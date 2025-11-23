@@ -849,47 +849,37 @@ if st.session_state.page == 'landing':
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
     def sample_flights_by_score(df):
-        ranges = {'0-10': (0, 10, 5), '10-30': (10, 30, 4), '30-60': (30, 60, 2), '60-80': (60, 80, 2), '80-100': (80, 100, 1)}
-        
+        counts = [5, 4, 2, 2, 1]
+        ranges = [(0,10), (10,30), (30,60), (60,80), (80,100)]
+    
+        # Flights to exclude
+        filtered = ['WN2933','WN2759','WN1889','WN28','WN2606','WN1582','WN1065','WN448']
+    
         selected = []
-        used_year_month = set()  # Track (Year, Month) to ensure uniqueness
-        filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']  # Flights to exclude
     
-        for low, high, n in ranges.values():
+        df = df.copy()
+        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
+    
+        for (low, high), n in zip(ranges, counts):
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
-            if df_range.empty:
-                continue
-            
-            # Filter out flights with duplicate Year-Month
-            df_range = df_range[~df_range.apply(lambda row: (row['Year'], row['Month']) in used_year_month, axis=1)]
-            
-            # Pick up to n flights
-            sample_count = min(n, len(df_range))
-            if sample_count == 0:
-                continue
-            
-            sample_rows = df_range.head(sample_count)
-            for idx, row in sample_rows.iterrows():
-                used_year_month.add((row['Year'], row['Month']))
-            selected.append(sample_rows)
+            # Remove filtered flights
+            df_range = df_range[~df_range['flight_str'].isin(filtered)]
+            if not df_range.empty:
+                # If fewer than desired, take all
+                take_n = min(n, len(df_range))
+                selected.append(df_range.head(take_n))
     
-        # Combine all selected flights
         if selected:
-            final_df = pd.concat(selected)
+            final_df = pd.concat(selected).copy()
         else:
-            final_df = df.head(14)
+            # fallback: take first 14
+            final_df = df.head(14).copy()
     
-        # Build flight number list, excluding filtered flights
-        flight_nums = []
-        for idx, row in final_df.iterrows():
-            fnum = row.get('Flight_Number_Reporting_Airline', 'N/A')
-            if fnum != 'N/A':
-                try: fnum = f"WN{int(float(fnum))}"
-                except: fnum = f"WN{fnum}"
-                if fnum not in flight_nums and fnum not in filtered:
-                    flight_nums.append(fnum)
+        # Shuffle the order by using the index (no random lib)
+        final_df = final_df.sample(frac=1, random_state=42)
     
-        flight_nums = pd.Series(flight_nums).sample(frac=1, random_state=42).tolist()
+        # Return flight numbers for dropdown
+        flight_nums = final_df['flight_str'].tolist()
         return flight_nums
 
     flight_numbers = sample_flights_by_score(TEST_DATA_DF)
