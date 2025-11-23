@@ -408,6 +408,13 @@ if st.session_state.page == 'landing':
             date_str = f"Q{selected_row.get('Quarter', 'N/A')} Day {selected_row.get('DayofMonth', 'N/A')}"    
         # -----------------------------------
 
+        def safe_float(value):
+            try:
+                v = float(value)
+                return 0 if pd.isna(v) else v
+            except:
+                return 0
+
         flight_data = {
             "id": selected_index,
             "source": "CSV",
@@ -415,14 +422,14 @@ if st.session_state.page == 'landing':
             "date": date_str,  # <--- Uses the new formatted string
             "origin": str(selected_row.get('Origin', 'N/A')),
             "dest": str(selected_row.get('Dest', 'N/A')),
-            "distance": float(selected_row.get('Distance', 0)),
+            "distance": safe_float(selected_row.get('Distance', 0)),
             "dep_time": int(selected_row.get('CRSDepTime', 0)),
             "weather_raw": {
-                'tavg': float(selected_row.get('tavg', 0)),
-                'prcp': float(selected_row.get('prcp', 0)),
-                'snow': float(selected_row.get('snow', 0)),
-                'wspd': float(selected_row.get('wspd', 0)),
-                'pres': float(selected_row.get('pres', 0)),
+                'tavg': safe_float(selected_row.get('tavg', 0)),
+                'prcp': safe_float(selected_row.get('prcp', 0)),
+                'snow': safe_float(selected_row.get('snow', 0)),
+                'wspd': safe_float(selected_row.get('wspd', 0)),
+                'pres': safe_float(selected_row.get('pres', 0)),
             },
             "true_weather_score": float(selected_row.get('weatherScore', 0))
         }
