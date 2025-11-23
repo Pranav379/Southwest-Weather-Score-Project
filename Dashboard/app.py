@@ -796,7 +796,7 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    def sample_flights_by_score_unique_dates(df):
+    def sample_flights_by_score(df):
         filtered = {"WN2933", "WN2759", "WN1889", "WN28", "WN2606", "WN1582", "WN1065", "WN448"}
         df = df.copy()
     
