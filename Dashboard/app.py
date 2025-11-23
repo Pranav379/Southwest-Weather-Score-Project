@@ -1016,8 +1016,8 @@ if st.session_state.page == 'landing':
 
     route_options = [r['label'] for r in unique_routes]
     if not route_options:
-    st.warning(f"No routes found for flight {selected_flight_num}")
-    st.stop()
+        st.warning(f"No routes found for flight {selected_flight_num}")
+        st.stop()
     
     selected_route = st.selectbox(
         "📍 Select a route:",
