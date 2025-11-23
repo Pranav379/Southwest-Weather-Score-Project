@@ -796,36 +796,41 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    def sample_flights_by_score(df):
+    def sample_flights_by_score_unique_dates(df):
         filtered = {"WN2933", "WN2759", "WN1889", "WN28", "WN2606", "WN1582", "WN1065", "WN448"}
         df = df.copy()
-        
+    
         # Normalize flight numbers
         df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
             lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A'
         )
         df = df[~df['flight_str'].isin(filtered)]
     
+        # Allowed years
+        allowed_years = list(range(2015,2020)) + [2023,2024]
+        df = df[df['Year'].isin(allowed_years)]
+        
+        # Unique date identifier
+        df['flight_date'] = df['Year'].astype(str) + "-" + df['Month'].astype(str) + "-" + df['DayofMonth'].astype(str)
+    
         selected_rows = []
+        used_dates = set()
+    
         ranges = [(0,10,5), (10,30,4), (30,60,2), (60,80,2), (80,100,1)]
     
         for low, high, n in ranges:
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
-            if len(df_range) >= n:
-                sampled = df_range.sample(n, random_state=42)
-            else:
-                sampled = df_range
-                needed = n - len(df_range)
-                df_extra = df[df['weatherScore'] > high].sort_values('weatherScore').head(needed)
-                sampled = pd.concat([sampled, df_extra])
+            df_range = df_range[~df_range['flight_date'].isin(used_dates)]
+            sampled = df_range.head(n)
             selected_rows.append(sampled)
+            used_dates.update(sampled['flight_date'].tolist())
     
-        final_df = pd.concat(selected_rows) if selected_rows else df.head(16)
+        final_df = pd.concat(selected_rows) if selected_rows else df.head(sum([r[2] for r in ranges]))
     
         # Shuffle using Pandas sample
         final_df = final_df.sample(frac=1, random_state=42)
     
-        # Extract unique flight numbers
+        # Extract flight numbers
         flight_nums = []
         for idx, row in final_df.iterrows():
             fnum = row.get('Flight_Number_Reporting_Airline','N/A')
@@ -835,21 +840,7 @@ if st.session_state.page == 'landing':
                 if fnum not in flight_nums:
                     flight_nums.append(fnum)
     
-        # Fill remaining flights to reach total count if needed
-        total_target = sum([r[2] for r in ranges])
-        if len(flight_nums) < total_target:
-            remaining = total_target - len(flight_nums)
-            df_remaining = df[~df['flight_str'].isin(set(flight_nums))]
-            additional = df_remaining.head(remaining)
-            for idx, row in additional.iterrows():
-                fnum = row.get('Flight_Number_Reporting_Airline','N/A')
-                if fnum != 'N/A' and fnum not in flight_nums:
-                    try: fnum = f"WN{int(float(fnum))}"
-                    except: fnum = f"WN{fnum}"
-                    flight_nums.append(fnum)
-    
-        return flight_nums[:total_target]
-
+        return flight_nums[:sum([r[2] for r in ranges])]
 
     flight_numbers = sample_flights_by_score(TEST_DATA_DF)
 
