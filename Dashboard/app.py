@@ -826,51 +826,22 @@ if st.session_state.page == 'landing':
         df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
             lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
         )
-    
-        # Exclude filtered flights
         df = df[~df['flight_str'].isin(filtered)]
     
-        all_flights = []
+        target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+        picked_flights = []
     
-        # Explicitly pick flights per year groups
-        year_groups = {
-            2024: 3,
-            2023: 3,
-            '2015_2019': 3
-        }
+        for year in target_years:
+            df_year = df[df['Year'] == year]
+            if not df_year.empty:
+                # Pick first flight of the year (or random if you prefer deterministic)
+                flight = df_year.iloc[0]['flight_str']
+                picked_flights.append(flight)
     
-        for group, n in year_groups.items():
-            if group == '2015_2019':
-                sub_df = df[df['Year'].isin([2015, 2016, 2017, 2018, 2019])]
-            else:
-                sub_df = df[df['Year'] == group]
+        # Optional: deterministic shuffle so the dropdown isn't always in year order
+        picked_flights = sorted(picked_flights, key=lambda x: hash(x) % 1000)
     
-            # Ensure unique month+year per flight
-            sub_df = sub_df.copy()
-            sub_df['month_year'] = sub_df['Month'].astype(str) + '-' + sub_df['Year'].astype(str)
-            used_my = set()
-            picked = []
-    
-            for idx, row in sub_df.iterrows():
-                my = row['month_year']
-                if my not in used_my:
-                    picked.append(row['flight_str'])
-                    used_my.add(my)
-                if len(picked) >= n:
-                    break
-    
-            all_flights.extend(picked)
-    
-        # Fill remaining to get 14 flights total
-        remaining = df[~df['flight_str'].isin(all_flights)]
-        for idx, row in remaining.iterrows():
-            if len(all_flights) >= 14:
-                break
-            all_flights.append(row['flight_str'])
-    
-        # Shuffle deterministically
-        all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
-        return all_flights
+        return picked_flights
     
     flight_numbers = get_sampled_flights(TEST_DATA_DF)
     selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
