@@ -478,7 +478,7 @@ elif st.session_state.page == 'result':
     elif risk_score <= 80:
         status_color = "#FF5722"  # Orange/Red
         status_title = "🚨 High Risk"
-        status_msg = "Poor weather conditions. Delays are likely."
+        status_msg = "Delays are likely."
     else:
         status_color = "#C60C30"  # Deep Red
         status_title = "⛔ Very High Risk"
