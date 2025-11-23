@@ -706,43 +706,45 @@ except ImportError:
 # ==========================================
 # 2. DATA LOADING
 # ==========================================
-script_dir = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
+CSV_FILE_PATH = 'flight_data.csv.gz'
+TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
 
 @st.cache_data
 @st.cache_data
 def load_data(file_path):
-    import pandas as pd, os, streamlit as st
-
-    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-    TARGET_PER_YEAR = 50
-
     if not os.path.exists(file_path):
         st.error(f"File not found: {file_path}")
         return None
 
-    collected = []
+    collected = {yr: None for yr in TARGET_YEARS}  # store 1 flight per year
 
-    # Read in chunks
-    chunks = pd.read_csv(file_path, chunksize=10_000)
+    try:
+        # Read CSV in chunks
+        chunks = pd.read_csv(file_path, chunksize=5000, compression='gzip')
 
-    for chunk in chunks:
-        chunk.columns = chunk.columns.str.strip()
-        for yr in TARGET_YEARS:
-            year_rows = chunk[chunk["Year"] == yr]
-            if not year_rows.empty:
-                take_n = min(len(year_rows), TARGET_PER_YEAR)
-                collected.append(year_rows.sample(take_n, random_state=42, replace=False))
+        for chunk in chunks:
+            chunk.columns = chunk.columns.str.strip()
+            for yr in TARGET_YEARS:
+                if collected[yr] is not None:
+                    continue
+                df_year = chunk[chunk['Year'] == yr]
+                if not df_year.empty:
+                    collected[yr] = df_year.iloc[0]  # pick first flight
+            # Stop if we got 1 flight for every year
+            if all(v is not None for v in collected.values()):
+                break
 
-        # Stop early if we have enough
-        if len(collected) >= len(TARGET_YEARS):
-            break
+        # Combine into a DataFrame
+        df_list = [v for v in collected.values() if v is not None]
+        if df_list:
+            df = pd.DataFrame(df_list)
+            return df
+        else:
+            st.error("No flights found in the data.")
+            return None
 
-    if collected:
-        df = pd.concat(collected, ignore_index=True)
-        return df
-    else:
-        st.error("No data loaded.")
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
         return None
         
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
