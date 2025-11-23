@@ -721,7 +721,7 @@ def load_data(file_path):
 
     try:
         # Read CSV in chunks
-        chunks = pd.read_csv(file_path, chunksize=5000, compression='gzip')
+        chunks = pd.read_csv(file_path, chunksize=5000)
 
         for chunk in chunks:
             chunk.columns = chunk.columns.str.strip()
