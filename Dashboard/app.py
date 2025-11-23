@@ -797,11 +797,17 @@ if st.session_state.page == 'landing':
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
     def sample_flights_by_score(df):
+        unwanted = {"WN2933", "WN2759"}
         ranges = [(0,10,6), (10,30,2), (30,60,2), (60,80,2), (80,100,2)]
         selected_rows = []
     
         for low, high, n in ranges:
-            df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
+            df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)].copy()
+            
+            # Remove unwanted flights
+            df_range['flight_str'] = df_range['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A')
+            df_range = df_range[~df_range['flight_str'].isin(unwanted)]
+            
             if not df_range.empty:
                 sample_n = min(n, len(df_range))
                 sampled = df_range.sample(sample_n, random_state=42)
@@ -819,17 +825,21 @@ if st.session_state.page == 'landing':
                 except: fnum = f"WN{fnum}"
                 flight_nums.append(fnum)
     
-        # Ensure exactly 14 flights
+        # Fill remaining to reach 14, excluding unwanted flights
         if len(flight_nums) < 14:
             remaining = 14 - len(flight_nums)
-            additional = df[~df['Flight_Number_Reporting_Airline'].isin(final_df['Flight_Number_Reporting_Airline'])].sample(min(remaining, len(df)), random_state=42)
+            df_remaining = df.copy()
+            df_remaining['flight_str'] = df_remaining['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A')
+            df_remaining = df_remaining[~df_remaining['flight_str'].isin(flight_nums.union(unwanted))]
+            additional = df_remaining.sample(min(remaining, len(df_remaining)), random_state=42)
             for idx, row in additional.iterrows():
                 fnum = row.get('Flight_Number_Reporting_Airline','N/A')
                 if fnum != 'N/A':
                     try: fnum = f"WN{int(float(fnum))}"
                     except: fnum = f"WN{fnum}"
                     flight_nums.append(fnum)
-        return flight_nums[:14]  # ensure max 14
+    
+        return flight_nums[:14]
 
     flight_numbers = sample_flights_by_score(TEST_DATA_DF)
 
