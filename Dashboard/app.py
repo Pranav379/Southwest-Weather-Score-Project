@@ -585,7 +585,7 @@ elif st.session_state.page == 'result':
     if HAS_PANDAS:
         # Decode Airport Names
         origin_iata = data['Origin'].classes_[int(float(flight['origin']))]
-        dest_iata = data['Dest'].classes_[int(float(flight['dest']))]
+        dest_iata = data['Origin'].classes_[int(float(flight['dest']))]
 
         # load airport data
         airports = airportsdata.load('IATA') 
