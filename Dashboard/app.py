@@ -775,7 +775,7 @@ def load_data(file_path):
             if (
                 len(collected[2024]) >= TARGET_REQUIREMENTS[2024]
                 and len(collected[2023]) >= TARGET_REQUIREMENTS[2023]
-                and len(collected["2015_2019"]) >= TARGET_REQUIREMENTS["2015_2019]
+                and len(collected["2015_2019"]) >= TARGET_REQUIREMENTS["2015_2019"]
             ):
                 break
     
