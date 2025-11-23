@@ -846,44 +846,53 @@ if st.session_state.page == 'landing':
     # --- FLIGHT SAMPLING FUNCTION ---
     def get_sampled_flights(df):
         filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
-        
+    
         # Normalize flight numbers
         df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
             lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A'
         )
-        
+    
         # Exclude filtered flights
         df = df[~df['flight_str'].isin(filtered)]
-        
-        # Helper: pick N flights from each year
-        def pick_flights(year_list, n):
-            df_sub = df[df['Year'].isin(year_list)].copy()
-            df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
-            picked = []
+    
+        all_flights = []
+    
+        # Explicitly pick flights per year groups
+        year_groups = {
+            2024: 3,
+            2023: 3,
+            '2015_2019': 3
+        }
+    
+        for group, n in year_groups.items():
+            if group == '2015_2019':
+                sub_df = df[df['Year'].isin([2015, 2016, 2017, 2018, 2019])]
+            else:
+                sub_df = df[df['Year'] == group]
+    
+            # Ensure unique month+year per flight
+            sub_df = sub_df.copy()
+            sub_df['month_year'] = sub_df['Month'].astype(str) + '-' + sub_df['Year'].astype(str)
             used_my = set()
-            for idx, row in df_sub.iterrows():
+            picked = []
+    
+            for idx, row in sub_df.iterrows():
                 my = row['month_year']
                 if my not in used_my:
                     picked.append(row['flight_str'])
                     used_my.add(my)
                 if len(picked) >= n:
                     break
-            return picked
-        
-        # Pick specific numbers from different years
-        flights_2024 = pick_flights([2024], 3)
-        flights_2023 = pick_flights([2023], 3)
-        flights_2015_2019 = pick_flights([2015, 2016, 2017, 2018, 2019], 3)
-        
-        all_flights = flights_2024 + flights_2023 + flights_2015_2019
-        
-        # Fill remaining up to 14 flights from any other years
+    
+            all_flights.extend(picked)
+    
+        # Fill remaining to get 14 flights total
         remaining = df[~df['flight_str'].isin(all_flights)]
         for idx, row in remaining.iterrows():
             if len(all_flights) >= 14:
                 break
             all_flights.append(row['flight_str'])
-        
+    
         # Shuffle deterministically
         all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
         return all_flights
