@@ -800,23 +800,25 @@ if st.session_state.page == 'landing':
         ranges = {'0-10': (0, 10, 5), '10-30': (10, 30, 4), '30-60': (30, 60, 2), '60-80': (60, 80, 2), '80-100': (80, 100, 1)}
         
         selected = []
-        used_dates = set()
+        used_year_month = set()  # Track (Year, Month) to ensure uniqueness
+        filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']  # Flights to exclude
     
         for low, high, n in ranges.values():
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
             if df_range.empty:
                 continue
-                
-            df_range = df_range[~df_range.apply(lambda row: (row['Year'], row['Month'], row['DayofMonth']) in used_dates, axis=1)]
             
-            # Take up to n flights
+            # Filter out flights with duplicate Year-Month
+            df_range = df_range[~df_range.apply(lambda row: (row['Year'], row['Month']) in used_year_month, axis=1)]
+            
+            # Pick up to n flights
             sample_count = min(n, len(df_range))
             if sample_count == 0:
                 continue
             
-            sample_rows = df_range.head(sample_count)  # pick first n that satisfy unique date
+            sample_rows = df_range.head(sample_count)
             for idx, row in sample_rows.iterrows():
-                used_dates.add((row['Year'], row['Month'], row['DayofMonth']))
+                used_year_month.add((row['Year'], row['Month']))
             selected.append(sample_rows)
     
         # Combine all selected flights
@@ -825,9 +827,8 @@ if st.session_state.page == 'landing':
         else:
             final_df = df.head(14)
     
-        # Build flight number list (without unwanted flights)
+        # Build flight number list, excluding filtered flights
         flight_nums = []
-        filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
         for idx, row in final_df.iterrows():
             fnum = row.get('Flight_Number_Reporting_Airline', 'N/A')
             if fnum != 'N/A':
