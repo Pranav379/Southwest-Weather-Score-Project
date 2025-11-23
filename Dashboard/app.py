@@ -710,59 +710,86 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
+@st.cache_data
 def load_data(file_path):
     if not HAS_PANDAS:
         return None
-        
-    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
     
-    TARGET_ROWS_PER_YEAR = 5
+    TARGET_REQUIREMENTS = {
+        2024: 3,
+        2023: 3,
+        "2015_2019": 3,
+    }
     
-    collected = {yr: [] for yr in TARGET_YEARS}
+    collected = {
+        2024: [],
+        2023: [],
+        "2015_2019": [],
+    }
+    
+    YEAR_GROUP_2015_2019 = {2015, 2016, 2017, 2018, 2019}
     
     if not os.path.exists(file_path):
         st.error(f"File not found: {file_path}")
         return None
     
     try:
-        # Read CSV in moderately large chunks
         chunks = pd.read_csv(
             file_path,
-            chunksize=50_000,
+            chunksize=10_000,   # safe chunk size
         )
     
         for chunk in chunks:
             chunk.columns = chunk.columns.str.strip()
     
-            # Loop for each target year
-            for yr in TARGET_YEARS:
-                if len(collected[yr]) >= TARGET_ROWS_PER_YEAR:
-                    continue
+            # Loop through chunk rows by year
+            for year in chunk["Year"].unique():
+                # 2024 case
+                if year == 2024 and len(collected[2024]) < TARGET_REQUIREMENTS[2024]:
+                    slice_yr = chunk[chunk["Year"] == 2024]
+                    take_n = min(TARGET_REQUIREMENTS[2024] - len(collected[2024]), len(slice_yr))
+                    if take_n > 0:
+                        collected[2024].append(
+                            slice_yr.sample(take_n, replace=False, random_state=42)
+                        )
     
-                slice_yr = chunk[chunk["Year"] == yr]
+                # 2023 case
+                elif year == 2023 and len(collected[2023]) < TARGET_REQUIREMENTS[2023]:
+                    slice_yr = chunk[chunk["Year"] == 2023]
+                    take_n = min(TARGET_REQUIREMENTS[2023] - len(collected[2023]), len(slice_yr))
+                    if take_n > 0:
+                        collected[2023].append(
+                            slice_yr.sample(take_n, replace=False, random_state=42)
+                        )
     
-                if len(slice_yr) > 0:
-                    take_n = min(200, len(slice_yr))
-                    collected[yr].append(
-                        slice_yr.sample(take_n, replace=False, random_state=42)
-                    )
+                # 2015-2019 combined bucket
+                elif year in YEAR_GROUP_2015_2019 and len(collected["2015_2019"]) < TARGET_REQUIREMENTS["2015_2019"]:
+                    slice_yr = chunk[chunk["Year"] == year]
+                    take_n = min(TARGET_REQUIREMENTS["2015_2019"] - len(collected["2015_2019"]), len(slice_yr))
+                    if take_n > 0:
+                        collected["2015_2019"].append(
+                            slice_yr.sample(take_n, replace=False, random_state=42)
+                        )
     
-            total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
-            if all(len(pd.concat(collected[y])) >= TARGET_ROWS_PER_YEAR 
-                if collected[y] else False for y in TARGET_YEARS):
-                    break
-
-        # Combine all into a single dataframe
+            # Stop early if ALL requirements met
+            if (
+                len(collected[2024]) >= TARGET_REQUIREMENTS[2024]
+                and len(collected[2023]) >= TARGET_REQUIREMENTS[2023]
+                and len(collected["2015_2019"]) >= TARGET_REQUIREMENTS["2015_2019]
+            ):
+                break
+    
+        # Combine final data
         frames = []
-        for yr in TARGET_YEARS:
-            if collected[yr]:
-                frames.append(pd.concat(collected[yr]))
+        for key in collected:
+            if collected[key]:
+                frames.append(pd.concat(collected[key]))
     
         if frames:
             df = pd.concat(frames, ignore_index=True)
         else:
-            # fallback: read a small amount
-            df = pd.read_csv(file_path, chunksize = 17_000)
+            st.error("No data could be collected from file.")
+            return None
     
         return df
     
