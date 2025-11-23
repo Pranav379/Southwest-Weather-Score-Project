@@ -712,42 +712,61 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 @st.cache_data
 @st.cache_data
 def load_data(file_path):
-    if not HAS_PANDAS or not os.path.exists(file_path):
-        st.error(f"File not found or pandas missing: {file_path}")
+    if not os.path.exists(file_path):
+        st.error(f"File not found: {file_path}")
         return None
 
-    target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
-    min_rows_per_year = 5
-    collected = []
+    is_gzipped = file_path.endswith('.gz')
 
     try:
-        for chunk in pd.read_csv(file_path, chunksize=17_000):
+        # Try reading the first few rows to check file validity
+        test_df = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, nrows=5)
+        if test_df.empty:
+            st.error("CSV file is empty.")
+            return None
+    except Exception as e:
+        st.error(f"Error reading CSV: {e}")
+        return None
+
+    TARGET_YEARS = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+    TARGET_ROWS_PER_YEAR = 200
+    collected = {yr: [] for yr in TARGET_YEARS}
+
+    try:
+        # Read in chunks (smaller chunk size if your large CSV caused issues)
+        chunksize = 50_000 if os.path.getsize(file_path) > 10_000_000 else 10_000
+        chunks = pd.read_csv(file_path, compression='gzip' if is_gzipped else None, chunksize=chunksize)
+
+        for chunk in chunks:
+            # Clean column names
             chunk.columns = chunk.columns.str.strip()
 
-            # Keep only rows with weatherScore > 0
-            chunk = chunk[chunk['weatherScore'] > 0]
+            for yr in TARGET_YEARS:
+                if len(collected[yr]) >= TARGET_ROWS_PER_YEAR:
+                    continue
 
-            for yr in target_years:
-                slice_year = chunk[chunk['Year'] == yr]
-                if not slice_year.empty:
-                    # Take up to min_rows_per_year rows
-                    collected.append(slice_year.head(min_rows_per_year))
+                slice_yr = chunk[chunk["Year"] == yr]
+                if not slice_yr.empty:
+                    take_n = min(TARGET_ROWS_PER_YEAR - len(collected[yr]), len(slice_yr))
+                    collected[yr].append(slice_yr.sample(take_n, replace=False, random_state=42))
 
-            # Stop early if we already have enough rows
-            if len(collected) >= len(target_years):
+            # Stop if enough rows collected
+            total_rows = sum(len(pd.concat(collected[y])) if collected[y] else 0 for y in TARGET_YEARS)
+            if total_rows >= TARGET_ROWS_PER_YEAR * len(TARGET_YEARS):
                 break
 
-        if collected:
-            df = pd.concat(collected, ignore_index=True)
+        # Combine collected rows into a single dataframe
+        frames = [pd.concat(collected[yr]) for yr in TARGET_YEARS if collected[yr]]
+        if frames:
+            df = pd.concat(frames, ignore_index=True)
         else:
-            # fallback: load small sample
-            df = pd.read_csv(file_path, nrows=50_000, compression = 'gzip')
-            df = df[df['weatherScore'] > 0]
+            st.error("No valid data found in CSV.")
+            return None
 
         return df
 
     except Exception as e:
-        st.error(f"Error loading data: {e}")
+        st.error(f"Error processing CSV: {e}")
         return None
         
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
