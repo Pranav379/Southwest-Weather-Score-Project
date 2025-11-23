@@ -356,7 +356,7 @@ if st.session_state.page == 'landing':
             except Exception:
                 # Fallback if label encoding or IATA lookup fails
                 # --- The FIX: Don't skip! Use raw values if lookup fails ---
-                route_label = f"Loc {raw_origin} → Loc {raw_dest}"
+                route_label = f"{raw_origin} → {raw_dest}"
 
             matching_rows.append({
                 'label': route_label,
