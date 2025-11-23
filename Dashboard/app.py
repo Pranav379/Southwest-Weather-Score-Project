@@ -763,47 +763,30 @@ if TEST_DATA_DF is not None and 'weatherScore' in TEST_DATA_DF.columns:
     # Keep only > 0 as before
     TEST_DATA_DF = TEST_DATA_DF[TEST_DATA_DF['weatherScore'] > 0]
 
-    # --- EXTRA SAMPLE FLIGHTS BASED ON SCORE RANGES ---
-    # one flight with 0 < score <= 10
-    low_score_row = TEST_DATA_DF[
-        (TEST_DATA_DF['weatherScore'] > 0) &
-        (TEST_DATA_DF['weatherScore'] <= 10)
-    ].head(1)
 
-    # one flight with 10 < score <= 30
-    medium_score_row = TEST_DATA_DF[
-        (TEST_DATA_DF['weatherScore'] > 10) &
-        (TEST_DATA_DF['weatherScore'] <= 30)
-    ].head(1)
+EXTRA_FLIGHTS = set()
 
-    # Build a set of extra flight numbers (formatted as the dropdown uses, e.g. WN1234)
-    EXTRA_FLIGHTS = set()
-    def _format_fn(raw):
-        try:
-            return f"WN{int(float(raw))}"
-        except Exception:
-            return f"WN{raw}"
+def _format_fn(raw):
+    try:
+        return f"WN{int(float(raw))}"
+    except:
+        return f"WN{raw}"
 
-    if not low_score_row.empty:
-        raw_fn = low_score_row.iloc[0].get('Flight_Number_Reporting_Airline', None)
-        if raw_fn is not None:
-            EXTRA_FLIGHTS.add(_format_fn(raw_fn))
-    if not medium_score_row.empty:
-        raw_fn = medium_score_row.iloc[0].get('Flight_Number_Reporting_Airline', None)
-        if raw_fn is not None:
-            EXTRA_FLIGHTS.add(_format_fn(raw_fn))
-else:
-    if TEST_DATA_DF is None:
-        st.error("Cannot load flight data. Stopping execution.")
-        st.stop()
-    elif data is None:
-        st.error("Cannot load label encoders. Stopping execution.")
-        st.stop()
-    else:
-        # Missing weatherScore column
-        st.error("Dataset missing 'weatherScore' column. Stopping execution.")
-        st.stop()
+score_ranges = [
+    ((0, 10), 4),
+    ((10, 30), 2),
+    ((30, 60), 2),
+    ((60, 80), 2),
+    ((80, float('inf')), 2)
+]
 
+for (low, high), count in score_ranges:
+    subset = TEST_DATA_DF[(TEST_DATA_DF['weatherScore'] > low) & (TEST_DATA_DF['weatherScore'] <= high)]
+    for _, row in subset.head(count).iterrows():
+        fn = row.get('Flight_Number_Reporting_Airline')
+        if fn is not None:
+            EXTRA_FLIGHTS.add(_format_fn(fn))
+            
 # ==========================================
 # 3. SOUTHWEST STYLING (CSS) - THEME UPGRADE
 # ==========================================
