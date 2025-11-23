@@ -830,7 +830,8 @@ if st.session_state.page == 'landing':
             remaining = 14 - len(flight_nums)
             df_remaining = df.copy()
             df_remaining['flight_str'] = df_remaining['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A')
-            df_remaining = df_remaining[~df_remaining['flight_str'].isin(flight_nums.union(unwanted))]
+            flight_nums_set = set(flight_nums)  # Convert to set
+            df_remaining = df_remaining[~df_remaining['flight_str'].isin(flight_nums_set.union(unwanted))]
             additional = df_remaining.sample(min(remaining, len(df_remaining)), random_state=42)
             for idx, row in additional.iterrows():
                 fnum = row.get('Flight_Number_Reporting_Airline','N/A')
