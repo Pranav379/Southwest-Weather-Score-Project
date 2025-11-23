@@ -749,7 +749,7 @@ def load_data(file_path):
             df = pd.concat(sampled_frames, ignore_index=True)
         else:
             # Fallback: small load
-            df = pd.read_csv(file_path, nrows=5000, compression="gzip")
+            df = pd.read_csv(file_path, chunksize = 50)
 
         return df
 
