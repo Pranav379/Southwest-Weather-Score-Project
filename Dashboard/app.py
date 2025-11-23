@@ -763,7 +763,7 @@ def load_data(file_path):
             df = pd.concat(frames, ignore_index=True)
         else:
             # fallback: read a small amount
-            df = pd.read_csv(file_path, nrows=20000)
+            df = pd.read_csv(file_path, chunksize = 1000)
     
         return df
     
