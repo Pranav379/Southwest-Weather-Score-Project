@@ -754,6 +754,9 @@ if TEST_DATA_DF is not None and 'weatherScore' in TEST_DATA_DF.columns:
 # ==========================================
 # 4. EXTRA_FLIGHTS LOGIC (14 flights total)
 # ==========================================
+# ==========================================
+# 4. EXTRA_FLIGHTS LOGIC (14 unique routes)
+# ==========================================
 EXTRA_FLIGHTS = []
 
 def _format_fn(raw):
@@ -770,6 +773,9 @@ score_ranges_counts = [
     ((80, float('inf')), 2)
 ]
 
+# Keep track of selected routes to avoid duplicates
+selected_routes = set()
+
 for (low, high), count in score_ranges_counts:
     subset = TEST_DATA_DF[
         (TEST_DATA_DF['weatherScore'] > low) &
@@ -780,12 +786,19 @@ for (low, high), count in score_ranges_counts:
         if added >= count:
             break
         fn = row.get('Flight_Number_Reporting_Airline')
-        if fn is not None:
-            fn_formatted = _format_fn(fn)
-            if fn_formatted not in EXTRA_FLIGHTS:
-                EXTRA_FLIGHTS.append(fn_formatted)
+        origin = row.get('Origin')
+        dest = row.get('Dest')
+        if fn is not None and origin is not None and dest is not None:
+            route_key = f"{origin}->{dest}"
+            if route_key not in selected_routes:
+                fn_formatted = _format_fn(fn)
+                EXTRA_FLIGHTS.append({'flight': fn_formatted, 'origin': origin, 'dest': dest})
+                selected_routes.add(route_key)
                 added += 1
 
+# Now EXTRA_FLIGHTS has 14 entries with unique routes
+# For dropdown, just show flight number + route
+flight_options = [f"{f['flight']} ({f['origin']}→{f['dest']})" for f in EXTRA_FLIGHTS]
             
 # ==========================================
 # 3. SOUTHWEST STYLING (CSS) - THEME UPGRADE
@@ -967,15 +980,8 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align: left; color: #000000; font-size: 20px; font-family: Helvetica, Arial, sans-serif; font-weight: 800; margin-bottom: 50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    # Step 1: Build dropdown of 14 flights from EXTRA_FLIGHTS
-    BLOCKED = {"WN1582", "WN28", "WN2606", "WN448", "WN471", "WN1065"}
-    flight_numbers = [f for f in EXTRA_FLIGHTS if f not in BLOCKED]
-
-    selected_flight_num = st.selectbox(
-        "📊 Select a flight number:",
-        options=flight_numbers,
-        key="flight_select"
-    )
+    selected_flight_str = st.selectbox("📊 Select a flight:", options=flight_options)
+    selected_flight = next(f for f in EXTRA_FLIGHTS if f"{f['flight']} ({f['origin']}→{f['dest']})" == selected_flight_str)
 
     # Step 2: Get matching routes
     matching_rows = []
