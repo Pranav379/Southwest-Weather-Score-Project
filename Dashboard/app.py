@@ -980,8 +980,8 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align: left; color: #000000; font-size: 20px; font-family: Helvetica, Arial, sans-serif; font-weight: 800; margin-bottom: 50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    selected_flight_str = st.selectbox("📊 Select a flight:", options=flight_options)
-    selected_flight = next(f for f in EXTRA_FLIGHTS if f"{f['flight']} ({f['origin']}→{f['dest']})" == selected_flight_str)
+    selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_options)
+    selected_flight = next(f for f in EXTRA_FLIGHTS if f"{f['flight']}" == selected_flight_num)
 
     # Step 2: Get matching routes
     matching_rows = []
