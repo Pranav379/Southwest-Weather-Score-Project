@@ -304,11 +304,27 @@ if st.session_state.page == 'landing':
                 flight_num = f"WN{int(float(flight_num))}"
             except:
                 flight_num = f"WN{flight_num}"
+
+        if flight_num == "WN1582":
+            continue
+
+        if flight_num == "WN28":
+            continue
+
+        if flight_num == "WN2606":
+            continue
+
+        if flight_num == "WN448":
+            continue
+
+        if flight_num == "WN471":
+            continue
+            
         if flight_num not in flight_numbers:
             flight_numbers.append(flight_num)
     
-    # --- LIMIT TO 10 ITEMS ---
-        if len(flight_numbers) >= 10:
+    # --- LIMIT TO 5 ITEMS ---
+        if len(flight_numbers) >= 5:
             break
     
     selected_flight_num = st.selectbox(
