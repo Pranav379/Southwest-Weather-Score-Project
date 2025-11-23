@@ -711,6 +711,7 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
 @st.cache_data
+@st.cache_data
 def load_data(file_path):
     if not HAS_PANDAS:
         return None
