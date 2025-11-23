@@ -797,45 +797,52 @@ if st.session_state.page == 'landing':
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
     def sample_flights_by_score(df):
-        unwanted = {"WN2933", "WN2759"}
-        ranges = [(0,10,6), (10,30,2), (30,60,2), (60,80,2), (80,100,2)]
+        unwanted = {"WN2933", "WN2759", "WN1889"}
+        df = df.copy()
+        
+        # Normalize flight numbers
+        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(
+            lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A'
+        )
+        df = df[~df['flight_str'].isin(unwanted)]
+    
         selected_rows = []
     
-        for low, high, n in ranges:
-            df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)].copy()
-            
-            # Remove unwanted flights
-            df_range['flight_str'] = df_range['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A')
-            df_range = df_range[~df_range['flight_str'].isin(unwanted)]
-            
-            if not df_range.empty:
-                sample_n = min(n, len(df_range))
-                sampled = df_range.sample(sample_n, random_state=42)
-                selected_rows.append(sampled)
+        # Define ranges and target counts
+        ranges = [(0,10,6), (10,30,2), (30,60,2), (60,80,2), (80,100,2)]
     
-        # Concatenate all sampled rows
+        for low, high, n in ranges:
+            df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
+            if len(df_range) >= n:
+                sampled = df_range.sample(n, random_state=42)
+            else:
+                # If not enough, take all and fill the rest with closest higher scores
+                sampled = df_range
+                needed = n - len(df_range)
+                df_extra = df[df['weatherScore'] > high].sort_values('weatherScore').head(needed)
+                sampled = pd.concat([sampled, df_extra])
+            selected_rows.append(sampled)
+    
         final_df = pd.concat(selected_rows) if selected_rows else df.head(14)
     
-        # Extract flight numbers (keep repeats to reach 14)
+        # Extract unique flight numbers
         flight_nums = []
         for idx, row in final_df.iterrows():
             fnum = row.get('Flight_Number_Reporting_Airline','N/A')
             if fnum != 'N/A':
                 try: fnum = f"WN{int(float(fnum))}"
                 except: fnum = f"WN{fnum}"
-                flight_nums.append(fnum)
+                if fnum not in flight_nums:
+                    flight_nums.append(fnum)
     
-        # Fill remaining to reach 14, excluding unwanted flights
+        # Fill remaining flights to reach 14 if needed
         if len(flight_nums) < 14:
             remaining = 14 - len(flight_nums)
-            df_remaining = df.copy()
-            df_remaining['flight_str'] = df_remaining['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if x != 'N/A' else 'N/A')
-            flight_nums_set = set(flight_nums)  # Convert to set
-            df_remaining = df_remaining[~df_remaining['flight_str'].isin(flight_nums_set.union(unwanted))]
+            df_remaining = df[~df['flight_str'].isin(set(flight_nums))]
             additional = df_remaining.sample(min(remaining, len(df_remaining)), random_state=42)
             for idx, row in additional.iterrows():
                 fnum = row.get('Flight_Number_Reporting_Airline','N/A')
-                if fnum != 'N/A':
+                if fnum != 'N/A' and fnum not in flight_nums:
                     try: fnum = f"WN{int(float(fnum))}"
                     except: fnum = f"WN{fnum}"
                     flight_nums.append(fnum)
