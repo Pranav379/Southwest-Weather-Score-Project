@@ -712,62 +712,37 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 @st.cache_data
 @st.cache_data
 def load_data(file_path):
-    if not HAS_PANDAS:
+    if not HAS_PANDAS or not os.path.exists(file_path):
+        st.error(f"File not found or pandas missing: {file_path}")
         return None
-        
-    target_years_2024 = 3
-    target_years_2023 = 3
-    target_years_2015_2019 = 3  # total from all 5 years
 
-    collected_2024 = []
-    collected_2023 = []
-    collected_2015_2019 = []
-
-    if not os.path.exists(file_path):
-        st.error(f"File not found: {file_path}")
-        return None
+    target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+    min_rows_per_year = 5
+    collected = []
 
     try:
-        # Read CSV in small chunks
-        chunks = pd.read_csv(file_path, chunksize=17_000, compression='gzip')
-
-        for chunk in chunks:
+        for chunk in pd.read_csv(file_path, chunksize=17_000):
             chunk.columns = chunk.columns.str.strip()
 
-            # 2024
-            if len(collected_2024) < target_years_2024:
-                df_2024 = chunk[chunk["Year"] == 2024]
-                if not df_2024.empty:
-                    take_n = min(target_years_2024 - len(collected_2024), len(df_2024))
-                    collected_2024.append(df_2024.sample(n=take_n, replace=False, random_state=42))
+            # Keep only rows with weatherScore > 0
+            chunk = chunk[chunk['weatherScore'] > 0]
 
-            # 2023
-            if len(collected_2023) < target_years_2023:
-                df_2023 = chunk[chunk["Year"] == 2023]
-                if not df_2023.empty:
-                    take_n = min(target_years_2023 - len(collected_2023), len(df_2023))
-                    collected_2023.append(df_2023.sample(n=take_n, replace=False, random_state=42))
+            for yr in target_years:
+                slice_year = chunk[chunk['Year'] == yr]
+                if not slice_year.empty:
+                    # Take up to min_rows_per_year rows
+                    collected.append(slice_year.head(min_rows_per_year))
 
-            # 2015–2019
-            if len(collected_2015_2019) < target_years_2015_2019:
-                df_old = chunk[chunk["Year"].between(2015, 2019)]
-                if not df_old.empty:
-                    take_n = min(target_years_2015_2019 - len(collected_2015_2019), len(df_old))
-                    collected_2015_2019.append(df_old.sample(n=take_n, replace=False, random_state=42))
-
-            # Break if we collected enough
-            if (len(collected_2024) >= target_years_2024 and
-                len(collected_2023) >= target_years_2023 and
-                len(collected_2015_2019) >= target_years_2015_2019):
+            # Stop early if we already have enough rows
+            if len(collected) >= len(target_years):
                 break
 
-        # Combine all
-        frames = collected_2024 + collected_2023 + collected_2015_2019
-        if frames:
-            df = pd.concat(frames, ignore_index=True)
+        if collected:
+            df = pd.concat(collected, ignore_index=True)
         else:
-            # fallback: read small amount
-            df = pd.read_csv(file_path, nrows=20_000, compression='gzip')
+            # fallback: load small sample
+            df = pd.read_csv(file_path, nrows=50_000)
+            df = df[df['weatherScore'] > 0]
 
         return df
 
@@ -848,42 +823,51 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    def sample_flights_by_score(df):
-        counts = [5, 4, 2, 2, 1]
-        ranges = [(0,10), (10,30), (30,60), (60,80), (80,100)]
-    
-        # Flights to exclude
-        filtered = ['WN2933','WN2759','WN1889','WN28','WN2606','WN1582','WN1065','WN448']
-    
-        selected = []
-    
-        df = df.copy()
-        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
-    
-        for (low, high), n in zip(ranges, counts):
-            df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
-            # Remove filtered flights
-            df_range = df_range[~df_range['flight_str'].isin(filtered)]
-            if not df_range.empty:
-                # If fewer than desired, take all
-                take_n = min(n, len(df_range))
-                selected.append(df_range.head(take_n))
-    
-        if selected:
-            final_df = pd.concat(selected).copy()
-        else:
-            # fallback: take first 14
-            final_df = df.head(14).copy()
-    
-        # Shuffle the order by using the index (no random lib)
-        final_df = final_df.sample(frac=1, random_state=42)
-    
-        # Return flight numbers for dropdown
-        flight_nums = final_df['flight_str'].tolist()
-        return flight_nums
+    # --- FLIGHT SAMPLING FUNCTION ---
+def get_sampled_flights(df):
+    filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
 
-    flight_numbers = sample_flights_by_score(TEST_DATA_DF)
+    # Convert flight numbers to normalized string
+    df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
 
+    # Exclude filtered flights
+    df = df[~df['flight_str'].isin(filtered)]
+
+    # Helper to pick N flights from a given year range
+    def pick_flights(year_range, n):
+        df_sub = df[df['Year'].isin(year_range)]
+        # Ensure unique month+year
+        df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
+        picked = []
+        used_month_year = set()
+        for idx, row in df_sub.iterrows():
+            my = row['month_year']
+            if my not in used_month_year:
+                picked.append(row['flight_str'])
+                used_month_year.add(my)
+            if len(picked) >= n:
+                break
+        return picked
+
+    # Pick flights per rules
+    flights_2024 = pick_flights([2024], 3)
+    flights_2023 = pick_flights([2023], 3)
+    flights_2015_2019 = pick_flights([2015,2016,2017,2018,2019], 3)
+
+    all_flights = flights_2024 + flights_2023 + flights_2015_2019
+
+    # If still <14, fill from remaining
+    remaining = df[~df['flight_str'].isin(all_flights)]
+    for idx, row in remaining.iterrows():
+        if len(all_flights) >= 14:
+            break
+        all_flights.append(row['flight_str'])
+
+    # Shuffle deterministically without random library
+    all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
+    return all_flights
+
+    flight_numbers = get_sample_flights(TEST_DATA_DF)
     selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
 
     # --- GET ROUTES FOR SELECTED FLIGHT ---
