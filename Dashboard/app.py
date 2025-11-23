@@ -47,19 +47,20 @@ CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
 def load_data(file_path):
-    """Safely loads the CSV data if available - only first 5000 rows for speed."""
+    """Efficient random sampling of 5000 rows without loading full dataset."""
     if not HAS_PANDAS:
         return None
     try:
-        # Load only first 5000 rows to speed up loading
-        df = pd.read_csv(file_path, nrows=5000, compression='gzip')
-        df.columns = df.columns.str.strip()
-        return df
+        chunks = pd.read_csv(file_path, compression='gzip', chunksize=100000)
+        df_sample = pd.concat(chunk.sample(n=5000, random_state=42) for chunk in chunks if len(chunk) >= 5000)
+        df_sample.columns = df_sample.columns.str.strip()
+        return df_sample.sample(n=5000, random_state=42)
     except FileNotFoundError:
         return None
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return None
+
 
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
 # ==========================================
