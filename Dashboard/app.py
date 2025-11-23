@@ -824,132 +824,132 @@ if st.session_state.page == 'landing':
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
     # --- FLIGHT SAMPLING FUNCTION ---
-def get_sampled_flights(df):
-    filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
-
-    # Convert flight numbers to normalized string
-    df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
-
-    # Exclude filtered flights
-    df = df[~df['flight_str'].isin(filtered)]
-
-    # Helper to pick N flights from a given year range
-    def pick_flights(year_range, n):
-        df_sub = df[df['Year'].isin(year_range)]
-        # Ensure unique month+year
-        df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
-        picked = []
-        used_month_year = set()
-        for idx, row in df_sub.iterrows():
-            my = row['month_year']
-            if my not in used_month_year:
-                picked.append(row['flight_str'])
-                used_month_year.add(my)
-            if len(picked) >= n:
+    def get_sampled_flights(df):
+        filtered = ['WN2933', 'WN2759', 'WN1889', 'WN28', 'WN2606', 'WN1582', 'WN1065', 'WN448']
+    
+        # Convert flight numbers to normalized string
+        df['flight_str'] = df['Flight_Number_Reporting_Airline'].apply(lambda x: f"WN{int(float(x))}" if pd.notna(x) else 'N/A')
+    
+        # Exclude filtered flights
+        df = df[~df['flight_str'].isin(filtered)]
+    
+        # Helper to pick N flights from a given year range
+        def pick_flights(year_range, n):
+            df_sub = df[df['Year'].isin(year_range)]
+            # Ensure unique month+year
+            df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
+            picked = []
+            used_month_year = set()
+            for idx, row in df_sub.iterrows():
+                my = row['month_year']
+                if my not in used_month_year:
+                    picked.append(row['flight_str'])
+                    used_month_year.add(my)
+                if len(picked) >= n:
+                    break
+            return picked
+    
+        # Pick flights per rules
+        flights_2024 = pick_flights([2024], 3)
+        flights_2023 = pick_flights([2023], 3)
+        flights_2015_2019 = pick_flights([2015,2016,2017,2018,2019], 3)
+    
+        all_flights = flights_2024 + flights_2023 + flights_2015_2019
+    
+        # If still <14, fill from remaining
+        remaining = df[~df['flight_str'].isin(all_flights)]
+        for idx, row in remaining.iterrows():
+            if len(all_flights) >= 14:
                 break
-        return picked
-
-    # Pick flights per rules
-    flights_2024 = pick_flights([2024], 3)
-    flights_2023 = pick_flights([2023], 3)
-    flights_2015_2019 = pick_flights([2015,2016,2017,2018,2019], 3)
-
-    all_flights = flights_2024 + flights_2023 + flights_2015_2019
-
-    # If still <14, fill from remaining
-    remaining = df[~df['flight_str'].isin(all_flights)]
-    for idx, row in remaining.iterrows():
-        if len(all_flights) >= 14:
-            break
-        all_flights.append(row['flight_str'])
-
-    # Shuffle deterministically without random library
-    all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
-    return all_flights
-
-    flight_numbers = get_sample_flights(TEST_DATA_DF)
-    selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
-
-    # --- GET ROUTES FOR SELECTED FLIGHT ---
-    matching_rows = []
-    for idx, row in TEST_DATA_DF.iterrows():
-        row_fnum = row.get('Flight_Number_Reporting_Airline','N/A')
-        if row_fnum != 'N/A':
-            try: f_str = f"WN{int(float(row_fnum))}"
-            except: f_str = f"WN{row_fnum}"
-        else: f_str = 'N/A'
-        if f_str == selected_flight_num:
-            raw_origin = row.get('Origin','N/A')
-            raw_dest = row.get('Dest','N/A')
+            all_flights.append(row['flight_str'])
+    
+        # Shuffle deterministically without random library
+        all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
+        return all_flights
+    
+        flight_numbers = get_sample_flights(TEST_DATA_DF)
+        selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
+    
+        # --- GET ROUTES FOR SELECTED FLIGHT ---
+        matching_rows = []
+        for idx, row in TEST_DATA_DF.iterrows():
+            row_fnum = row.get('Flight_Number_Reporting_Airline','N/A')
+            if row_fnum != 'N/A':
+                try: f_str = f"WN{int(float(row_fnum))}"
+                except: f_str = f"WN{row_fnum}"
+            else: f_str = 'N/A'
+            if f_str == selected_flight_num:
+                raw_origin = row.get('Origin','N/A')
+                raw_dest = row.get('Dest','N/A')
+                try:
+                    origin_idx = int(float(raw_origin))
+                    dest_idx = int(float(raw_dest))
+                    origin_iata = data['Origin'].classes_[origin_idx]
+                    dest_iata = data['Origin'].classes_[dest_idx]
+                    originInfo = airports.get(origin_iata)
+                    destInfo = airports.get(dest_iata)
+                    origin_display = f"{originInfo.get('name', origin_iata)} ({origin_iata})" if originInfo else origin_iata
+                    dest_display = f"{destInfo.get('name', dest_iata)} ({dest_iata})" if destInfo else dest_iata
+                    route_label = f"{origin_display} → {dest_display}"
+                except: route_label = f"{raw_origin} → {raw_dest}"
+                matching_rows.append({'label': route_label,'index': idx})
+    
+        # Remove duplicate routes
+        unique_routes = []
+        seen = set()
+        for item in matching_rows:
+            if item['label'] not in seen:
+                unique_routes.append(item)
+                seen.add(item['label'])
+    
+        route_options = [r['label'] for r in unique_routes]
+        selected_route = st.selectbox("📍 Select a route:", options=route_options, key="route_select")
+    
+        if st.button("Analyze", key="analyze_btn", use_container_width=True):
+            selected_route_obj = next(r for r in unique_routes if r['label'] == selected_route)
+            selected_index = selected_route_obj['index']
+            selected_row = TEST_DATA_DF.loc[selected_index]
+    
+            # Flight number normalization
+            flight_num = str(selected_row.get('Flight_Number_Reporting_Airline','N/A'))
+            if flight_num != 'N/A':
+                try: flight_num = f"WN{int(float(flight_num))}"
+                except: flight_num = f"WN{flight_num}"
+    
+            # Date formatting
             try:
-                origin_idx = int(float(raw_origin))
-                dest_idx = int(float(raw_dest))
-                origin_iata = data['Origin'].classes_[origin_idx]
-                dest_iata = data['Origin'].classes_[dest_idx]
-                originInfo = airports.get(origin_iata)
-                destInfo = airports.get(dest_iata)
-                origin_display = f"{originInfo.get('name', origin_iata)} ({origin_iata})" if originInfo else origin_iata
-                dest_display = f"{destInfo.get('name', dest_iata)} ({dest_iata})" if destInfo else dest_iata
-                route_label = f"{origin_display} → {dest_display}"
-            except: route_label = f"{raw_origin} → {raw_dest}"
-            matching_rows.append({'label': route_label,'index': idx})
-
-    # Remove duplicate routes
-    unique_routes = []
-    seen = set()
-    for item in matching_rows:
-        if item['label'] not in seen:
-            unique_routes.append(item)
-            seen.add(item['label'])
-
-    route_options = [r['label'] for r in unique_routes]
-    selected_route = st.selectbox("📍 Select a route:", options=route_options, key="route_select")
-
-    if st.button("Analyze", key="analyze_btn", use_container_width=True):
-        selected_route_obj = next(r for r in unique_routes if r['label'] == selected_route)
-        selected_index = selected_route_obj['index']
-        selected_row = TEST_DATA_DF.loc[selected_index]
-
-        # Flight number normalization
-        flight_num = str(selected_row.get('Flight_Number_Reporting_Airline','N/A'))
-        if flight_num != 'N/A':
-            try: flight_num = f"WN{int(float(flight_num))}"
-            except: flight_num = f"WN{flight_num}"
-
-        # Date formatting
-        try:
-            mm = int(float(selected_row.get('Month',0)))
-            dd = int(float(selected_row.get('DayofMonth',0)))
-            yy = int(float(selected_row.get('Year',2024)))
-            date_str = datetime.date(yy,mm,dd).strftime("%B %d, %Y")
-        except:
-            date_str = f"Q{selected_row.get('Quarter','N/A')} Day {selected_row.get('DayofMonth','N/A')}"
-
-        def safe_float(v):
-            try: val = float(v); return 0 if pd.isna(val) else val
-            except: return 0
-
-        flight_data = {
-            "id": selected_index,
-            "source": "CSV",
-            "flight_num": flight_num,
-            "date": date_str,
-            "origin": str(selected_row.get('Origin','N/A')),
-            "dest": str(selected_row.get('Dest','N/A')),
-            "distance": safe_float(selected_row.get('Distance',0)),
-            "dep_time": int(selected_row.get('CRSDepTime',0)),
-            "weather_raw": {
-                'tavg': safe_float(selected_row.get('tavg',0)),
-                'prcp': safe_float(selected_row.get('prcp',0)),
-                'snow': safe_float(selected_row.get('snow',0)),
-                'wspd': safe_float(selected_row.get('wspd',0)),
-                'pres': safe_float(selected_row.get('pres',0)),
-            },
-            "true_weather_score": float(selected_row.get('weatherScore',0))
-        }
-        st.session_state.selected_flight = flight_data
-        st.session_state.page = 'result'
-        st.rerun()
+                mm = int(float(selected_row.get('Month',0)))
+                dd = int(float(selected_row.get('DayofMonth',0)))
+                yy = int(float(selected_row.get('Year',2024)))
+                date_str = datetime.date(yy,mm,dd).strftime("%B %d, %Y")
+            except:
+                date_str = f"Q{selected_row.get('Quarter','N/A')} Day {selected_row.get('DayofMonth','N/A')}"
+    
+            def safe_float(v):
+                try: val = float(v); return 0 if pd.isna(val) else val
+                except: return 0
+    
+            flight_data = {
+                "id": selected_index,
+                "source": "CSV",
+                "flight_num": flight_num,
+                "date": date_str,
+                "origin": str(selected_row.get('Origin','N/A')),
+                "dest": str(selected_row.get('Dest','N/A')),
+                "distance": safe_float(selected_row.get('Distance',0)),
+                "dep_time": int(selected_row.get('CRSDepTime',0)),
+                "weather_raw": {
+                    'tavg': safe_float(selected_row.get('tavg',0)),
+                    'prcp': safe_float(selected_row.get('prcp',0)),
+                    'snow': safe_float(selected_row.get('snow',0)),
+                    'wspd': safe_float(selected_row.get('wspd',0)),
+                    'pres': safe_float(selected_row.get('pres',0)),
+                },
+                "true_weather_score": float(selected_row.get('weatherScore',0))
+            }
+            st.session_state.selected_flight = flight_data
+            st.session_state.page = 'result'
+            st.rerun()
 
 # --- RESULT PAGE ---
 elif st.session_state.page == 'result':
