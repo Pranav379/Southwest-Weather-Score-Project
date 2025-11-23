@@ -10,8 +10,8 @@ try:
         data = pickle.load(file)
 except FileNotFoundError:
     with open('./Dashboard/label_encoders.pkl', 'rb') as file:
-    st.error("Error: label_encoders.pkl not found. Please ensure the file is in the correct path.")
-    data = None # Set data to None if file not found
+            st.error("Error: label_encoders.pkl not found. Please ensure the file is in the correct path.")
+            data = None # Set data to None if file not found
 except Exception as e:
     st.error(f"Error loading label encoders: {e}")
     data = None
