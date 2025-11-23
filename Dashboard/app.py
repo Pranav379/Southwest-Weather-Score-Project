@@ -1032,8 +1032,8 @@ if st.session_state.page == 'landing':
         if flight_num not in flight_numbers:
             flight_numbers.append(flight_num)
 
-        # --- LIMIT TO 20 ITEMS ---
-        if len(flight_numbers) >= 20:
+        # --- LIMIT TO 12 ITEMS ---
+        if len(flight_numbers) >= 12:
             break
 
     # ensure the EXTRA_FLIGHTS are present in the dropdown
