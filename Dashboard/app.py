@@ -796,25 +796,40 @@ if st.session_state.page == 'landing':
     airports = airportsdata.load('IATA')
     st.markdown("""<div style='text-align:left;color:#000;font-size:20px;font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;font-weight:800;margin-bottom:50px;'>Enter your flight number to get started!</div>""", unsafe_allow_html=True)
 
-    # --- 14-FLIGHT BREAKDOWN FUNCTION ---
     def sample_flights_by_score(df):
-        ranges = {'0-10': (0,10,6),'10-30': (10,30,2),'30-60': (30,60,2),'60-80': (60,80,2),'80-100': (80,100,2)}
-        selected = []
-        for low, high, n in ranges.values():
+        ranges = [(0,10,6), (10,30,2), (30,60,2), (60,80,2), (80,100,2)]
+        selected_rows = []
+    
+        for low, high, n in ranges:
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
             if not df_range.empty:
-                sample = df_range.sample(min(n,len(df_range)), random_state=42)
-                selected.append(sample)
-        if selected: final_df = pd.concat(selected)
-        else: final_df = df.head(14)
+                sample_n = min(n, len(df_range))
+                sampled = df_range.sample(sample_n, random_state=42)
+                selected_rows.append(sampled)
+    
+        # Concatenate all sampled rows
+        final_df = pd.concat(selected_rows) if selected_rows else df.head(14)
+    
+        # Extract flight numbers (keep repeats to reach 14)
         flight_nums = []
         for idx, row in final_df.iterrows():
             fnum = row.get('Flight_Number_Reporting_Airline','N/A')
             if fnum != 'N/A':
                 try: fnum = f"WN{int(float(fnum))}"
                 except: fnum = f"WN{fnum}"
-                if fnum not in flight_nums: flight_nums.append(fnum)
-        return flight_nums
+                flight_nums.append(fnum)
+    
+        # Ensure exactly 14 flights
+        if len(flight_nums) < 14:
+            remaining = 14 - len(flight_nums)
+            additional = df[~df['Flight_Number_Reporting_Airline'].isin(final_df['Flight_Number_Reporting_Airline'])].sample(min(remaining, len(df)), random_state=42)
+            for idx, row in additional.iterrows():
+                fnum = row.get('Flight_Number_Reporting_Airline','N/A')
+                if fnum != 'N/A':
+                    try: fnum = f"WN{int(float(fnum))}"
+                    except: fnum = f"WN{fnum}"
+                    flight_nums.append(fnum)
+        return flight_nums[:14]  # ensure max 14
 
     flight_numbers = sample_flights_by_score(TEST_DATA_DF)
 
