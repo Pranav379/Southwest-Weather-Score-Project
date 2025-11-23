@@ -741,7 +741,7 @@ def load_data(file_path):
             df = pd.concat(collected, ignore_index=True)
         else:
             # fallback: load small sample
-            df = pd.read_csv(file_path, nrows=50_000)
+            df = pd.read_csv(file_path, nrows=50_000, compression = 'gzip')
             df = df[df['weatherScore'] > 0]
 
         return df
