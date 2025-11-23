@@ -808,22 +808,24 @@ if st.session_state.page == 'landing':
     
         selected_rows = []
     
-        # Define ranges and target counts
-        ranges = [(0,10,6), (10,30,2), (30,60,2), (60,80,2), (80,100,2)]
+        # Define new ranges and target counts: 6, 4, 3, 2, 1
+        ranges = [(0,10,6), (10,30,4), (30,60,3), (60,80,2), (80,100,1)]
     
         for low, high, n in ranges:
             df_range = df[(df['weatherScore'] > low) & (df['weatherScore'] <= high)]
             if len(df_range) >= n:
                 sampled = df_range.sample(n, random_state=42)
             else:
-                # If not enough, take all and fill the rest with closest higher scores
                 sampled = df_range
                 needed = n - len(df_range)
                 df_extra = df[df['weatherScore'] > high].sort_values('weatherScore').head(needed)
                 sampled = pd.concat([sampled, df_extra])
             selected_rows.append(sampled)
     
-        final_df = pd.concat(selected_rows) if selected_rows else df.head(14)
+        final_df = pd.concat(selected_rows) if selected_rows else df.head(16)
+    
+        # Shuffle using Pandas sample
+        final_df = final_df.sample(frac=1, random_state=42)
     
         # Extract unique flight numbers
         flight_nums = []
@@ -835,11 +837,12 @@ if st.session_state.page == 'landing':
                 if fnum not in flight_nums:
                     flight_nums.append(fnum)
     
-        # Fill remaining flights to reach 14 if needed
-        if len(flight_nums) < 14:
-            remaining = 14 - len(flight_nums)
+        # Fill remaining flights to reach total count if needed
+        total_target = sum([r[2] for r in ranges])
+        if len(flight_nums) < total_target:
+            remaining = total_target - len(flight_nums)
             df_remaining = df[~df['flight_str'].isin(set(flight_nums))]
-            additional = df_remaining.sample(min(remaining, len(df_remaining)), random_state=42)
+            additional = df_remaining.head(remaining)
             for idx, row in additional.iterrows():
                 fnum = row.get('Flight_Number_Reporting_Airline','N/A')
                 if fnum != 'N/A' and fnum not in flight_nums:
@@ -847,7 +850,8 @@ if st.session_state.page == 'landing':
                     except: fnum = f"WN{fnum}"
                     flight_nums.append(fnum)
     
-        return flight_nums[:14]
+        return flight_nums[:total_target]
+
 
     flight_numbers = sample_flights_by_score(TEST_DATA_DF)
 
