@@ -833,26 +833,41 @@ if st.session_state.page == 'landing':
         # Exclude filtered flights
         df = df[~df['flight_str'].isin(filtered)]
     
-        # Target years
-        target_years = [2015, 2016, 2017, 2018, 2019, 2023, 2024]
+        # Helper to pick flights per year range, ensuring unique month+year
+        def pick_flights(year_range, n):
+            df_sub = df[df['Year'].isin(year_range)].copy()
+            df_sub['month_year'] = df_sub['Month'].astype(str) + '-' + df_sub['Year'].astype(str)
+            picked = []
+            used_month_year = set()
+            for idx, row in df_sub.iterrows():
+                my = row['month_year']
+                if my not in used_month_year:
+                    picked.append(row['flight_str'])
+                    used_month_year.add(my)
+                if len(picked) >= n:
+                    break
+            return picked
     
-        # Pick 1 flight per year
-        selected_flights = []
-        used_month_years = set()
-        for year in target_years:
-            df_year = df[df['Year'] == year]
-            if not df_year.empty:
-                # Pick the first flight that hasn’t been used in the same month+year
-                for idx, row in df_year.iterrows():
-                    my = f"{row['Month']}-{row['Year']}"
-                    if my not in used_month_years:
-                        selected_flights.append(row['flight_str'])
-                        used_month_years.add(my)
-                        break
+        # Pick flights by rules
+        flights_2024 = pick_flights([2024], 3)
+        flights_2023 = pick_flights([2023], 3)
+        flights_2015_2019 = pick_flights([2015, 2016, 2017, 2018, 2019], 3)
     
-        # Deterministic shuffle so dropdown order isn’t chronological
-        selected_flights = sorted(selected_flights, key=lambda x: hash(x) % 1000)
-        return selected_flights
+        # Combine
+        all_flights = flights_2024 + flights_2023 + flights_2015_2019
+    
+        # Fill remaining to reach 14
+        remaining_needed = 14 - len(all_flights)
+        if remaining_needed > 0:
+            remaining = df[~df['flight_str'].isin(all_flights)]
+            for idx, row in remaining.iterrows():
+                if len(all_flights) >= 14:
+                    break
+                all_flights.append(row['flight_str'])
+    
+        # Deterministic shuffle
+        all_flights = sorted(all_flights, key=lambda x: hash(x) % 1000)
+        return all_flights
     
     flight_numbers = get_sampled_flights(TEST_DATA_DF)
     selected_flight_num = st.selectbox("📊 Select a flight number:", options=flight_numbers, key="flight_select")
