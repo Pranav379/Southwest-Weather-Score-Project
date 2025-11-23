@@ -74,12 +74,6 @@ Objective: Predict **DepDel15 (delay ≥ 15 min)**
 - Class imbalance addressed using `class_weight="balanced"`  
 - Hyperparameter optimization via Optuna (ROC-AUC)
 
----
-
-### 3. Neural Network (Keras) — Regression
-- Three dense hidden layers: **128 → 64 → 32 (ReLU)**
-- 200 epochs, batch size 64 + EarlyStopping
-
 | Metric | Score |
 |--------|-------|
 | Accuracy | 0.600 |
@@ -87,6 +81,11 @@ Objective: Predict **DepDel15 (delay ≥ 15 min)**
 | Precision | 0.319 |
 | ROC-AUC | 0.707 |
 
+---
+
+### 3. Neural Network (Keras) — Regression
+- Three dense hidden layers: **128 → 64 → 32 (ReLU)**
+- 200 epochs, batch size 64 + EarlyStopping
 
 Model file stored at: `weather_prediction_model.h5`
 
