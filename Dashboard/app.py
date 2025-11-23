@@ -43,7 +43,7 @@ except ImportError:
 # ==========================================
 # Set the CSV file path - assumes it's in the same directory as app.py
 script_dir = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE_PATH = os.path.join(script_dir, 'reduced_exported_df.csv.gz')
+CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
 def load_data(file_path):
@@ -584,9 +584,9 @@ elif st.session_state.page == 'result':
     # 1. PREPARE DATA (Do this before columns so both cards can use it)
     if HAS_PANDAS:
         # Decode Airport Names
-        origin_iata = data['Origin'].classes_[int(float(flight['origin']))]
-        dest_iata = data['Origin'].classes_[int(float(flight['dest']))]
-
+        origin_iata = flight['Origin']
+        dest_iata = flight['Dest']
+        
         # load airport data
         airports = airportsdata.load('IATA') 
         
