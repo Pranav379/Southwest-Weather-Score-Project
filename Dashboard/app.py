@@ -584,8 +584,8 @@ elif st.session_state.page == 'result':
     # 1. PREPARE DATA (Do this before columns so both cards can use it)
     if HAS_PANDAS:
         # Decode Airport Names
-        origin_iata = flight['Origin']
-        dest_iata = flight['Dest']
+        origin_iata = flight['origin']
+        dest_iata = flight['dest']
         
         # load airport data
         airports = airportsdata.load('IATA') 
