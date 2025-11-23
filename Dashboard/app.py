@@ -327,7 +327,7 @@ if st.session_state.page == 'landing':
             flight_numbers.append(flight_num)
     
     # --- LIMIT TO 10 ITEMS ---
-        if len(flight_numbers) >= 10:
+        if len(flight_numbers) >= 20:
             break
     
     selected_flight_num = st.selectbox(
