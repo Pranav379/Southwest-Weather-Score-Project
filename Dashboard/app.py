@@ -615,7 +615,7 @@ elif st.session_state.page == 'result':
                 pres_in = weather['pres'] * 0.02953
                 risks.append(f"• Low Pressure ({pres_in:.1f} inHg)")
             
-            if weather['prcp'] > 0:
+            if weather['prcp'] > 0.5:
                 prcp_in = weather['prcp'] * 0.03937
                 risks.append(f"• Precipitation ({prcp_in:.1f} in)")
             
