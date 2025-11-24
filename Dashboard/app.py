@@ -115,20 +115,6 @@ def load_data(file_path):
 
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
 
-# ==========================================
-# DEBUG: Check score distribution
-# ==========================================
-if TEST_DATA_DF is not None and 'weatherScore' in TEST_DATA_DF.columns:
-    st.write("### DEBUG: Score Distribution")
-    st.write(f"Total flights loaded: {len(TEST_DATA_DF)}")
-    st.write(f"Score 0-10: {len(TEST_DATA_DF[TEST_DATA_DF['weatherScore'] <= 10])}")
-    st.write(f"Score 10-30: {len(TEST_DATA_DF[(TEST_DATA_DF['weatherScore'] > 10) & (TEST_DATA_DF['weatherScore'] <= 30)])}")
-    st.write(f"Score 30-60: {len(TEST_DATA_DF[(TEST_DATA_DF['weatherScore'] > 30) & (TEST_DATA_DF['weatherScore'] < 60)])}")
-    st.write(f"Score 60+: {len(TEST_DATA_DF[TEST_DATA_DF['weatherScore'] >= 60])}")
-    st.write(f"Min score: {TEST_DATA_DF['weatherScore'].min()}")
-    st.write(f"Max score: {TEST_DATA_DF['weatherScore'].max()}")
-    st.write("---")
-
 
 # ==========================================
 # FILTER: Only keep flights with Risk > 0
@@ -549,11 +535,11 @@ elif st.session_state.page == 'result':
     # Status and gauge
     col_gauge, col_status = st.columns([1, 1])
     
-    if risk_score <= 10:
+    if risk_score <= 20:
         status_color = "#4CAF50"  # Green
         status_title = "✅ Very Low Risk"
         status_msg = "Excellent conditions. Expect on-time departure."
-    elif risk_score <= 30:
+    elif risk_score <= 40:
         status_color = "#8BC34A"  # Light Green
         status_title = "🟢 Low Risk"
         status_msg = "Good conditions, though minor weather factors are present."
