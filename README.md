@@ -5,7 +5,7 @@ Using 10 years of historical flight and meteorological data (2015–2025), this 
 
 ---
 
-[Dashboard](https://southwest-weather-score.streamlit.app/)
+[Click here to see the dashboard!](https://southwest-weather-score.streamlit.app/)
 
 ## 📍 Project Purpose
 
