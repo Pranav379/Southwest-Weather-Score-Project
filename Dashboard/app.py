@@ -46,6 +46,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
+@st.cache_data
 def load_data(file_path):
     """Load data with bias toward lower weatherScore to show most flights have low risk."""
     if not HAS_PANDAS:
@@ -54,11 +55,7 @@ def load_data(file_path):
         chunks = pd.read_csv(file_path, compression='gzip', chunksize=10000)
         df = pd.concat(chunk.sample(n=5000, random_state=42) for chunk in chunks if len(chunk) >= 5000)
         df.columns = df.columns.str.strip()
-
-        # # Read entire CSV file
-        # df = pd.read_csv(file_path)
-        # df.columns = df.columns.str.strip()
-        
+    
         if len(df) == 0:
             return None
         
