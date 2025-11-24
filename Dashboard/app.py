@@ -43,9 +43,8 @@ except ImportError:
 # ==========================================
 # Set the CSV file path - assumes it's in the same directory as app.py
 script_dir = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
+CSV_FILE_PATH = os.path.join(script_dir, 'procesed_flight_data.csv.gz')
 
-@st.cache_data
 @st.cache_data
 def load_data(file_path):
     """Load data with bias toward lower weatherScore to show most flights have low risk."""
