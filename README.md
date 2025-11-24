@@ -5,7 +5,7 @@ Using 10 years of historical flight and meteorological data (2015–2025), this 
 
 ---
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://your-app-name.streamlit.app](https://southwest-weather-score.streamlit.app/))
+[Dashboard]([https://your-app-name.streamlit.app](https://southwest-weather-score.streamlit.app/))
 
 ## 📍 Project Purpose
 
