@@ -43,7 +43,7 @@ except ImportError:
 # ==========================================
 # Set the CSV file path - assumes it's in the same directory as app.py
 script_dir = os.path.dirname(os.path.abspath(__file__))
-CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv')
+CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
 
 @st.cache_data
 def load_data(file_path):
@@ -51,9 +51,13 @@ def load_data(file_path):
     if not HAS_PANDAS:
         return None
     try:
-        # Read entire CSV file
-        df = pd.read_csv(file_path)
+        chunks = pd.read_csv(file_path, compression='gzip', chunksize=100000)
+        df = pd.concat(chunk.sample(n=5000, random_state=42) for chunk in chunks if len(chunk) >= 5000)
         df.columns = df.columns.str.strip()
+
+        # # Read entire CSV file
+        # df = pd.read_csv(file_path)
+        # df.columns = df.columns.str.strip()
         
         if len(df) == 0:
             return None
@@ -88,6 +92,29 @@ def load_data(file_path):
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return None
+    
+# # ==========================================
+# # 2. DATA LOADING
+# # ==========================================
+# # Set the CSV file path - assumes it's in the same directory as app.py
+# script_dir = os.path.dirname(os.path.abspath(__file__))
+# CSV_FILE_PATH = os.path.join(script_dir, 'flight_data.csv.gz')
+
+# @st.cache_data
+# def load_data(file_path):
+#     """Efficient random sampling of 5000 rows without loading full dataset."""
+#     if not HAS_PANDAS:
+#         return None
+#     try:
+#         chunks = pd.read_csv(file_path, compression='gzip', chunksize=100000)
+#         df_sample = pd.concat(chunk.sample(n=5000, random_state=42) for chunk in chunks if len(chunk) >= 5000)
+#         df_sample.columns = df_sample.columns.str.strip()
+#         return df_sample.sample(n=5000, random_state=42)
+#     except FileNotFoundError:
+#         return None
+#     except Exception as e:
+#         st.error(f"Error loading data: {e}")
+#         return None
 
 
 TEST_DATA_DF = load_data(CSV_FILE_PATH)
@@ -339,8 +366,8 @@ if st.session_state.page == 'landing':
         </div>
     """, unsafe_allow_html=True)
     
-    
-    # Step 1: Get unique flight numbers
+    TEST_DATA_DF = TEST_DATA_DF[~TEST_DATA_DF['Year'].isin([2020, 2021, 2022])]
+
     # Step 1: Get unique flight numbers with balanced risk distribution
     # Separate flights by risk category
     low_risk_flights = TEST_DATA_DF[TEST_DATA_DF['weatherScore'] < 35]
