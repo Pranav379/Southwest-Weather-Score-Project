@@ -804,7 +804,7 @@ elif page_selection == "📊 Custom Score Calculator":
             elif custom_score <= 40:
                 status_color = "#8BC34A"; status_title = "🟢 Low Risk"; status_msg = "Good conditions, though minor weather factors are present."
             elif custom_score <= 60:
-                status_color = "#FFB612"; status_title = "⚠️ Moderate Risk"; status_msg = "Weather/time of day factors present. Potential for minor delays."
+                status_color = "#FFB612"; status_title = "⚠️ Moderate Risk"; status_msg = "Weather factors present. Potential for minor delays."
             elif custom_score <= 80:
                 status_color = "#FF5722"; status_title = "🚨 High Risk"; status_msg = "Delays are likely."
             else:
