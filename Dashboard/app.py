@@ -575,7 +575,7 @@ if page_selection == "Flight Risk Viewer":
                             {'range': [80, 100], 'color': '#ffebee'}
                         ]
                     }
-                )))
+                ))
                 
                 # Margins kept wide so numbers don't get cut off
                 fig.update_layout(
