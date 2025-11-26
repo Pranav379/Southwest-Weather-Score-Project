@@ -747,87 +747,82 @@ elif page_selection == "Custom Weather Calculator":
         <div style='margin-bottom:12px; color:#555;'>Enter the weather and get your flight's risk status in seconds!</div>
     """, unsafe_allow_html=True)
 
-    # Inputs now in **imperial units for user convenience**
     with st.form(key="custom_form"):
         col1, col2 = st.columns(2)
+
         with col1:
             input_wspd_mph = st.number_input(
-                "Wind speed (mph)", min_value=0.0, step=0.1, format="%.1f", value=0.0, help="Enter wind speed in mph"
+                "Wind speed (mph)", min_value=0.0, step=0.1,
+                format="%.1f", value=None, placeholder="e.g., 15"
             )
             input_prcp_in = st.number_input(
-                "Precipitation (inches)", min_value=0.0, step=0.01, format="%.2f", value=0.0, help="Enter precipitation in inches"
+                "Precipitation (inches)", min_value=0.0, step=0.01,
+                format="%.2f", value=None, placeholder="e.g., 0.2"
             )
             input_snow_in = st.number_input(
-                "Snow (inches)", min_value=0.0, step=0.01, format="%.2f", value=0.0, help="Enter snow in inches"
-            )
-        with col2:
-            input_pres_inhg = st.number_input(
-                "Pressure (inHg)", min_value=29.5, max_value=32.5, step=0.01, format="%.2f", value=0.0, help="Enter pressure in inHg"
-            )
-            input_dep_time = st.number_input(
-                "Scheduled Departure — HHMM (24h)", min_value=0, max_value=2359, step=1, value=0, help="Enter time in 24h format, e.g., 1330"
-            )
-            input_distance = st.number_input(
-                "Distance — miles", min_value=0.0, step=1.0, format="%.1f", value=0.0, help="Enter distance in miles"
+                "Snow (inches)", min_value=0.0, step=0.01,
+                format="%.2f", value=None, placeholder="e.g., 0"
             )
 
+        with col2:
+            input_pres_inhg = st.number_input(
+                "Pressure (inHg)", min_value=29.5, max_value=32.5, step=0.01,
+                format="%.2f", value=None, placeholder="e.g., 30"
+            )
+            input_dep_time = st.number_input(
+                "Scheduled Departure — HHMM (24h)", min_value=0, max_value=2359,
+                step=1, value=None, placeholder="e.g., 1530"
+            )
+            input_distance = st.number_input(
+                "Distance — miles", min_value=0.0, step=1.0,
+                format="%.1f", value=None, placeholder="e.g., 250"
+            )
+
+        # ✅ Submit button must be inside the form
         submit = st.form_submit_button("Calculate Score")
 
     if submit:
-        # Validate inputs
-        if (
-            input_wspd_mph == 0.0 or input_prcp_in == 0.0 or input_snow_in == 0.0 or
-            input_pres_inhg == 0.0 or input_dep_time == 0 or input_distance == 0.0
-        ):
-            st.warning("⚠️ Please fill in all fields before calculating the score.")
+        # Ensure all fields are filled
+        if None in [input_wspd_mph, input_prcp_in, input_snow_in, input_pres_inhg, input_dep_time, input_distance]:
+            st.warning("Please fill in all fields before calculating the score.")
         else:
-            # Convert imperial back to metric for calculate_risk_score
+            # Convert imperial -> metric for calculation
             custom_weather = {
                 'wspd': float(input_wspd_mph) / 0.621371,  # mph -> km/h
                 'prcp': float(input_prcp_in) / 0.03937,    # in -> mm
                 'snow': float(input_snow_in) / 0.03937,    # in -> mm
                 'pres': float(input_pres_inhg) / 0.02953,  # inHg -> hPa
-                'tavg': 20.0                               # placeholder
+                'tavg': 20.0  # placeholder
             }
             custom_flight = {
                 'dep_time': int(input_dep_time),
                 'distance': float(input_distance)
             }
 
-            # Calculate score
+            # Calculate risk score
             custom_score = calculate_risk_score(custom_weather, custom_flight)
 
-            # Determine status (same thresholds/colors)
+            # Determine status
             if custom_score <= 20:
-                status_color = "#4CAF50"
-                status_title = "✅ Very Low Risk"
-                status_msg = "Excellent conditions. Expect on-time departure."
+                status_color = "#4CAF50"; status_title = "✅ Very Low Risk"; status_msg = "Excellent conditions. Expect on-time departure."
             elif custom_score <= 40:
-                status_color = "#8BC34A"
-                status_title = "🟢 Low Risk"
-                status_msg = "Good conditions, though minor weather factors are present."
+                status_color = "#8BC34A"; status_title = "🟢 Low Risk"; status_msg = "Good conditions, though minor weather factors are present."
             elif custom_score <= 60:
-                status_color = "#FFB612"
-                status_title = "⚠️ Moderate Risk"
-                status_msg = "Weather/time of day factors present. Potential for minor delays."
+                status_color = "#FFB612"; status_title = "⚠️ Moderate Risk"; status_msg = "Weather/time of day factors present. Potential for minor delays."
             elif custom_score <= 80:
-                status_color = "#FF5722"
-                status_title = "🚨 High Risk"
-                status_msg = "Delays are likely."
+                status_color = "#FF5722"; status_title = "🚨 High Risk"; status_msg = "Delays are likely."
             else:
-                status_color = "#C60C30"
-                status_title = "⛔ Very High Risk"
-                status_msg = "Severe weather. Significant delays or cancellations expected."
+                status_color = "#C60C30"; status_title = "⛔ Very High Risk"; status_msg = "Severe weather. Significant delays or cancellations expected."
 
             # Display score card
             st.markdown(f"""
-            <div class="score-container">
-                <div class="score-label">Custom Weather Delay Risk (0=Best, 100=Worst)</div>
-                <div class="big-score">{custom_score:.1f}</div>
-            </div>
+                <div class="score-container">
+                    <div class="score-label">Custom Weather Delay Risk (0=Best, 100=Worst)</div>
+                    <div class="big-score">{custom_score:.1f}</div>
+                </div>
             """, unsafe_allow_html=True)
 
-            # Gauge + status
+            # Display gauge + status
             col_gauge, col_status = st.columns([1, 1])
             with col_gauge:
                 if HAS_PLOTTING:
@@ -836,17 +831,9 @@ elif page_selection == "Custom Weather Calculator":
                         value=custom_score,
                         domain={'x': [0, 1], 'y': [0, 1]},
                         gauge={
-                            'axis': {'range': [0, 100], 'tickmode': 'array', 'tickvals': [0, 25, 50, 75, 100],
-                                     'ticktext': ['0', '25', '50', '75', '100'], 'tickfont': {'size': 14, 'color': '#000000'}},
+                            'axis': {'range': [0, 100]},
                             'bar': {'color': status_color},
-                            'bgcolor': "white",
-                            'steps': [
-                                {'range': [0, 10], 'color': '#e8f5e9'},
-                                {'range': [10, 30], 'color': '#f1f8e9'},
-                                {'range': [30, 60], 'color': '#fff8e1'},
-                                {'range': [60, 80], 'color': '#fbe9e7'},
-                                {'range': [80, 100], 'color': '#ffebee'}
-                            ]
+                            'bgcolor': "white"
                         }
                     ))
                     fig.update_layout(height=250, margin=dict(l=40, r=40, t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
@@ -856,39 +843,6 @@ elif page_selection == "Custom Weather Calculator":
                 st.markdown(f"### {status_title}")
                 st.write(status_msg)
 
-            st.markdown("---")
-            st.markdown("### Summary")
-            col_left, col_right = st.columns(2)
-
-            with col_left:
-                dep_time_str = f"{int(custom_flight['dep_time']):04d}"
-                formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
-                summary_html = f"""
-                <div class="stCard">
-                    <h3>✈️ Flight Details</h3>
-                    <table class="details-table" style="width:100%">
-                        <tr><td class="details-label">Distance</td><td class="details-value">{int(custom_flight['distance'])} mi</td></tr>
-                        <tr><td class="details-label">Scheduled Departure</td><td class="details-value">{formatted_dep_time}</td></tr>
-                    </table>
-                </div>
-                """
-                st.markdown(summary_html, unsafe_allow_html=True)
-
-            with col_right:
-                weather_html = f"""
-                <div class="stCard" style="border-top: 5px solid #FFB612;">
-                    <h3>☁️ Weather Factors</h3>
-                    <table class="details-table" style="width:100%">
-                        <tr><td class="details-label">Wind</td><td class="details-value">{input_wspd_mph:.1f} mph</td></tr>
-                        <tr><td class="details-label">Precip</td><td class="details-value">{input_prcp_in:.2f} in</td></tr>
-                        <tr><td class="details-label">Pressure</td><td class="details-value">{input_pres_inhg:.2f} inHg</td></tr>
-                        <tr><td class="details-label">Snow</td><td class="details-value">{input_snow_in:.2f} in</td></tr>
-                    </table>
-                </div>
-                """
-                st.markdown(weather_html, unsafe_allow_html=True)
-    else:
-        st.info("Enter custom weather inputs and click **Calculate Score**.")
 
 # End of script
 
