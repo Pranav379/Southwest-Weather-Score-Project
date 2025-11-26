@@ -733,17 +733,8 @@ if page_selection == "Flight Risk Viewer":
 # PAGE: Custom Weather Calculator
 # ---------------------------
 elif page_selection == "Custom Weather Calculator":
+    st.title("Custom Weather Score Calculator ⛅")
     st.markdown("""
-        <div style='
-            text-align: left; 
-            color: #3B5998; 
-            font-size: 48px; 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            font-weight: 700; 
-            margin-bottom: 20px; 
-        '>
-            Custom Weather Score Calculator ⛅
-        </div>
         <div style='
             text-align: left;
             color: #000000;
