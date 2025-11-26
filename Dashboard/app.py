@@ -731,7 +731,7 @@ if page_selection == "Flight Risk Viewer":
 # PAGE: Custom Weather Calculator
 # ---------------------------
 elif page_selection == "Custom Weather Calculator":
-    st.title("Custom Weather Score Calculator ⛅")
+    st.title("Custom Risk Calculator ⛅")
     st.markdown("""
         <div style='
             text-align: left;
