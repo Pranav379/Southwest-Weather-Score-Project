@@ -287,7 +287,7 @@ if 'selected_flight' not in st.session_state:
 # Sidebar navigation (Option C)
 page_selection = st.sidebar.radio(
     "Navigation Bar",
-    options=["Flight Risk Viewer", "Custom Score Calculator"],
+    options=["✈️ Flight Risk Viewer", "📊 Custom Score Calculator"],
     index=0
 )
 
@@ -303,7 +303,7 @@ st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
 # ---------------------------
 # PAGE: Flight Risk Viewer
 # ---------------------------
-if page_selection == "Flight Risk Viewer":
+if page_selection == "✈️ Flight Risk Viewer":
     # Keep original behavior: if no CSV or encoders, app previously stops; replicate that
     if TEST_DATA_DF is None:
         st.error("❌ CSV file not found!")
@@ -725,7 +725,7 @@ if page_selection == "Flight Risk Viewer":
 # ---------------------------
 # PAGE: Custom Weather Calculator
 # ---------------------------
-elif page_selection == "Custom Score Calculator":
+elif page_selection == "📊 Custom Score Calculator":
     st.title("Custom Risk Calculator ⛅")
     st.markdown("""
         <div style='
