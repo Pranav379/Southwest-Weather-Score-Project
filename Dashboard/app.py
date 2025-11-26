@@ -291,8 +291,8 @@ if 'selected_flight' not in st.session_state:
 
 # Sidebar navigation (Option C)
 page_selection = st.sidebar.radio(
-    "Navigate",
-    options=["Flight Risk Viewer", "Custom Weather Calculator"],
+    "Navigation Bar",
+    options=["Flight Risk Viewer", "Custom Score Calculator"],
     index=0
 )
 
@@ -730,7 +730,7 @@ if page_selection == "Flight Risk Viewer":
 # ---------------------------
 # PAGE: Custom Weather Calculator
 # ---------------------------
-elif page_selection == "Custom Weather Calculator":
+elif page_selection == "Custom Score Calculator":
     st.title("Custom Risk Calculator ⛅")
     st.markdown("""
         <div style='
