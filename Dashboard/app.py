@@ -262,7 +262,9 @@ def calculate_risk_score(weather, flight_data):
         risk += 40
     
     if weather['pres'] < 1005:
-        risk += 15
+        risk += 25
+    elif weather['pres'] > 1020:
+        risk += 10
     
     if flight_data['dep_time'] > 1800:
         risk += 5
