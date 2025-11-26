@@ -287,7 +287,7 @@ if 'selected_flight' not in st.session_state:
 # Sidebar navigation (Option C)
 page_selection = st.sidebar.radio(
     "Navigation Bar",
-    options=["Flight Risk Viewer", "Custom Score Calculator"],
+    options=["Flight Risk Viewer ✈️", "Custom Score Calculator 📊"],
     index=0
 )
 
