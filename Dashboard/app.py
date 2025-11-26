@@ -111,13 +111,14 @@ elif data is None:
 # ==========================================
 SOUTHWEST_CSS = """
 <style>
-    /* 1. Main Background with Animated Gradient */
+    /* 1. Main Background with Enhanced Gradient & Side Decorations */
     [data-testid="stAppViewContainer"] {
         background: linear-gradient(-45deg, #e8f0f7, #f4f7f6, #e3f2fd, #f0f4f8);
         background-size: 400% 400%;
         animation: gradientShift 15s ease infinite;
         color: #333333 !important;
         position: relative;
+        overflow-x: hidden;
     }
     
     /* Animated floating clouds in background */
@@ -129,12 +130,46 @@ SOUTHWEST_CSS = """
         width: 100%;
         height: 100%;
         background-image: 
-            radial-gradient(ellipse 800px 300px at 20% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-            radial-gradient(ellipse 600px 250px at 80% 70%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
-            radial-gradient(ellipse 700px 280px at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            radial-gradient(ellipse 800px 300px at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
+            radial-gradient(ellipse 600px 250px at 80% 70%, rgba(255, 255, 255, 0.35) 0%, transparent 50%),
+            radial-gradient(ellipse 700px 280px at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
         animation: cloudFloat 25s ease-in-out infinite;
         pointer-events: none;
         z-index: 0;
+    }
+    
+    /* Left side decorative accent - subtle blue glow */
+    [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: fixed;
+        left: -150px;
+        top: 0;
+        width: 300px;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            rgba(48, 76, 178, 0.08) 0%, 
+            rgba(48, 76, 178, 0.04) 50%, 
+            transparent 100%);
+        pointer-events: none;
+        z-index: 0;
+        animation: pulseGlow 8s ease-in-out infinite;
+    }
+    
+    /* Right side decorative accent - subtle gold/yellow glow */
+    body::before {
+        content: "";
+        position: fixed;
+        right: -150px;
+        top: 0;
+        width: 300px;
+        height: 100%;
+        background: linear-gradient(270deg, 
+            rgba(255, 182, 18, 0.06) 0%, 
+            rgba(255, 182, 18, 0.03) 50%, 
+            transparent 100%);
+        pointer-events: none;
+        z-index: 0;
+        animation: pulseGlow 8s ease-in-out infinite reverse;
     }
     
     @keyframes gradientShift {
@@ -145,7 +180,12 @@ SOUTHWEST_CSS = """
     
     @keyframes cloudFloat {
         0%, 100% { transform: translateX(0) translateY(0); opacity: 0.5; }
-        50% { transform: translateX(-30px) translateY(-20px); opacity: 0.7; }
+        50% { transform: translateX(-30px) translateY(-20px); opacity: 0.8; }
+    }
+    
+    @keyframes pulseGlow {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
     }
     
     /* Ensure content appears above animated background */
@@ -154,129 +194,193 @@ SOUTHWEST_CSS = """
         z-index: 1;
     }
     
-    /* Flying airplane animation */
-    @keyframes flyAcross {
-        0% { transform: translateX(-100px) translateY(0) rotate(-5deg); opacity: 0; }
-        10% { opacity: 0.15; }
-        90% { opacity: 0.15; }
-        100% { transform: translateX(calc(100vw + 100px)) translateY(-50px) rotate(-5deg); opacity: 0; }
-    }
+    /* LEFT SIDE DECORATIONS - Southwest Aviation Theme */
     
-    /* Add decorative airplane */
-    [data-testid="stAppViewContainer"]::after {
-        content: "✈️";
+    /* Southwest Heart (their logo element) - top left */
+    body::before {
+        content: "❤️";
         position: fixed;
-        font-size: 2rem;
-        top: 20%;
-        left: -100px;
-        animation: flyAcross 30s linear infinite;
+        left: 30px;
+        top: 12%;
+        font-size: 3.5rem;
+        opacity: 0.5;
         pointer-events: none;
         z-index: 0;
-        opacity: 0.15;
+        animation: heartPulse 4s ease-in-out infinite;
+        filter: hue-rotate(340deg) saturate(1.5) brightness(1.1);
     }
     
-    /* 2. Cards (The "Boarding Pass" Look) */
-    .stCard {
-        background-color: #ffffff;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Soft shadow */
-        margin-bottom: 20px;
-        border-top: 5px solid #304CB2; /* Southwest Blue Header Line */
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.6s ease-out;
+    /* Southwest airplane - left side */
+    .sidebar::before {
+        content: "🛫";
+        position: fixed;
+        left: 25px;
+        top: 28%;
+        font-size: 3.8rem;
+        opacity: 0.55;
+        transform: rotate(-20deg);
+        pointer-events: none;
+        z-index: 0;
+        animation: gentleBob 6s ease-in-out infinite;
     }
     
-    .stCard:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(48, 76, 178, 0.15);
+    /* Luggage/Bags (Southwest = Bags Fly Free) - left middle */
+    .sidebar::after {
+        content: "🧳";
+        position: fixed;
+        left: 28px;
+        top: 45%;
+        font-size: 3.2rem;
+        opacity: 0.48;
+        pointer-events: none;
+        z-index: 0;
+        animation: subtleBounce 5s ease-in-out infinite;
     }
     
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* Ticket/Boarding pass - left lower */
+    [data-testid="stSidebar"]::before {
+        content: "🎫";
+        position: fixed;
+        left: 30px;
+        top: 62%;
+        font-size: 3rem;
+        opacity: 0.52;
+        transform: rotate(-10deg);
+        pointer-events: none;
+        z-index: 0;
+        animation: ticketFloat 7s ease-in-out infinite;
     }
     
-    /* 3. Headers */
-    h1, h2, h3 {
-        color: #304CB2 !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-weight: 800;
+    /* Pilot/Crew - left bottom */
+    [data-testid="stSidebar"]::after {
+        content: "👨‍✈️";
+        position: fixed;
+        left: 28px;
+        top: 78%;
+        font-size: 3.2rem;
+        opacity: 0.45;
+        pointer-events: none;
+        z-index: 0;
+        animation: gentleWave 6s ease-in-out infinite;
     }
     
-    /* 4. Southwest Striping (Decorative Line) */
-    .sw-stripe {
-        height: 6px;
-        width: 100%;
-        background: linear-gradient(90deg, #304CB2 33%, #C60C30 33%, #C60C30 66%, #FFB612 66%);
-        border-radius: 3px;
-        margin: 10px 0 25px 0;
-    }
-
-    /* 5. Score Box Styling */
-    .score-container {
-        background: linear-gradient(135deg, #304CB2, #1A2C75);
-        color: #ffffff;
-        padding: 30px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 8px 20px rgba(48, 76, 178, 0.3);
-        position: relative;
-        overflow: hidden;
-    }
-    .score-label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #FFB612 !important; 
-        font-weight: 700;
-    }
-    .big-score {
+    /* RIGHT SIDE DECORATIONS - Southwest Experience Theme */
+    
+    /* Sunny sky (Southwest's bright personality) - top right */
+    [data-testid="stAppViewContainer"] .stApp::before {
+        content: "☀️";
+        position: fixed;
+        right: 35px;
+        top: 10%;
         font-size: 4rem;
-        font-weight: 900;
-        color: #ffffff !important;
-        margin: 5px 0;
-    }
-
-    /* 6. Buttons (Rounder & Bolder) */
-    button {
-        background-color: #304CB2 !important;
-        color: white !important;
-        border-radius: 50px !important; /* Pill shape */
-        font-weight: 700 !important;
-        padding: 0.5rem 1rem !important;
-        border: none !important;
-        transition: all 0.3s ease !important;
-    }
-    button:hover {
-        background-color: #253b8c !important;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(48, 76, 178, 0.3);
+        opacity: 0.6;
+        pointer-events: none;
+        z-index: 0;
+        animation: gentleSpin 25s linear infinite;
+        filter: brightness(1.2);
     }
     
-    /* 7. Custom Tables */
-    .details-table td {
-        padding: 12px 5px;
-        border-bottom: 1px solid #f0f0f0;
-        color: #444;
+    /* Airplane taking off - right upper */
+    [data-testid="stAppViewContainer"] .stApp::after {
+        content: "✈️";
+        position: fixed;
+        right: 30px;
+        top: 26%;
+        font-size: 3.5rem;
+        opacity: 0.5;
+        transform: rotate(-30deg);
+        pointer-events: none;
+        z-index: 0;
+        animation: subtlePulse 5s ease-in-out infinite;
     }
-    .details-label {
-        font-weight: 700;
-        color: #304CB2;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
+    
+    /* Southwest Heart (brand love) - right middle */
+    [data-testid="stHeader"]::before {
+        content: "💙";
+        position: fixed;
+        right: 32px;
+        top: 44%;
+        font-size: 3.2rem;
+        opacity: 0.48;
+        pointer-events: none;
+        z-index: 0;
+        animation: heartPulse 5s ease-in-out infinite;
+        filter: saturate(1.3);
     }
-    .details-value {
-        font-weight: 600;
-        font-size: 1rem;
-        color: #222;
+    
+    /* Map/Navigation (destination) - right lower */
+    [data-testid="stHeader"]::after {
+        content: "🗺️";
+        position: fixed;
+        right: 28px;
+        top: 62%;
+        font-size: 3rem;
+        opacity: 0.42;
+        pointer-events: none;
+        z-index: 0;
+        animation: mapUnfold 8s ease-in-out infinite;
+    }
+    
+    /* Palm tree (vacation/destination vibes) - right bottom */
+    body::after {
+        content: "🌴";
+        position: fixed;
+        right: 30px;
+        top: 78%;
+        font-size: 3.5rem;
+        opacity: 0.5;
+        pointer-events: none;
+        z-index: 0;
+        animation: palmSway 6s ease-in-out infinite;
+    }
+    
+    /* ANIMATION KEYFRAMES */
+    
+    @keyframes heartPulse {
+        0%, 100% { transform: scale(1); opacity: 0.18; }
+        50% { transform: scale(1.1); opacity: 0.28; }
+    }
+    
+    @keyframes gentleBob {
+        0%, 100% { transform: translateY(0) rotate(-20deg); }
+        50% { transform: translateY(-12px) rotate(-20deg); }
+    }
+    
+    @keyframes subtleBounce {
+        0%, 100% { transform: translateY(0); opacity: 0.16; }
+        50% { transform: translateY(-8px); opacity: 0.24; }
+    }
+    
+    @keyframes ticketFloat {
+        0%, 100% { transform: rotate(-10deg) translateY(0); }
+        50% { transform: rotate(-5deg) translateY(-10px); }
+    }
+    
+    @keyframes gentleWave {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(5deg); }
+        75% { transform: rotate(-5deg); }
+    }
+    
+    @keyframes gentleSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes subtlePulse {
+        0%, 100% { opacity: 0.18; transform: rotate(-30deg) scale(1); }
+        50% { opacity: 0.28; transform: rotate(-30deg) scale(1.08); }
+    }
+    
+    @keyframes mapUnfold {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.14; }
+        50% { transform: scale(1.05) rotate(2deg); opacity: 0.22; }
+    }
+    
+    @keyframes palmSway {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(3deg); }
+        75% { transform: rotate(-3deg); }
     }
 </style>
 """
