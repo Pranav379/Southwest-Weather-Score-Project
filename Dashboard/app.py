@@ -842,7 +842,7 @@ elif page_selection == "Custom Weather Calculator":
                             {'range': [80, 100], 'color': '#ffebee'}
                         ]
                     }
-                )))
+                ))
                 fig.update_layout(
                     height=250,
                     margin=dict(l=40, r=40, t=20, b=20),
