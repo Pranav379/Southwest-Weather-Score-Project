@@ -304,8 +304,6 @@ with col_logo:
 
 st.markdown('<div class="sw-stripe"></div>', unsafe_allow_html=True)
 
-st.title("Flight Delay Predictor ✈️")
-
 
 # ---------------------------
 # PAGE: Flight Risk Viewer
@@ -323,7 +321,7 @@ if page_selection == "Flight Risk Viewer":
     if st.session_state.viewer_page == 'landing':
         # FIX: Load airport data once for better dropdown display
         airports = airportsdata.load('IATA') 
-
+        st.title("Flight Delay Predictor ✈️")
         st.markdown("""
             <div style='
                 text-align: left; 
