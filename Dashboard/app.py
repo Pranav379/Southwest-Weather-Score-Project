@@ -744,7 +744,7 @@ elif page_selection == "Custom Weather Calculator":
         '>
             Custom Weather Score Calculator
         </div>
-        <div style='margin-bottom:12px; color:#555;'>Enter weather values (units shown). The app uses the same risk function as the CSV flow.</div>
+        <div style='margin-bottom:12px; color:#555;'>Enter the weather and get your flight's risk status in seconds!</div>
     """, unsafe_allow_html=True)
 
     # Inputs now in **imperial units for user convenience**
@@ -838,7 +838,7 @@ elif page_selection == "Custom Weather Calculator":
             st.write(status_msg)
 
         st.markdown("---")
-        st.markdown("### Input Summary & Contributing Factors")
+        st.markdown("### Summary")
         col_left, col_right = st.columns(2)
 
         with col_left:
@@ -846,7 +846,7 @@ elif page_selection == "Custom Weather Calculator":
             formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
             summary_html = f"""
             <div class="stCard">
-                <h3>✈️ Flight / Input Summary</h3>
+                <h3>✈️ Flight Details</h3>
                 <table class="details-table" style="width:100%">
                     <tr><td class="details-label">Distance</td><td class="details-value">{int(custom_flight['distance'])} mi</td></tr>
                     <tr><td class="details-label">Scheduled Departure</td><td class="details-value">{formatted_dep_time}</td></tr>
@@ -858,7 +858,7 @@ elif page_selection == "Custom Weather Calculator":
         with col_right:
             weather_html = f"""
             <div class="stCard" style="border-top: 5px solid #FFB612;">
-                <h3>☁️ Weather (Inputs)</h3>
+                <h3>☁️ Weather Factors</h3>
                 <table class="details-table" style="width:100%">
                     <tr><td class="details-label">Wind</td><td class="details-value">{input_wspd_mph:.1f} mph</td></tr>
                     <tr><td class="details-label">Precip</td><td class="details-value">{input_prcp_in:.2f} in</td></tr>
