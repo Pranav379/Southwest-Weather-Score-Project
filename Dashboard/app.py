@@ -735,22 +735,22 @@ if page_selection == "Flight Risk Viewer":
 elif page_selection == "Custom Weather Calculator":
     st.markdown("""
         <div style='
-            text-align: center; 
-            color: #1E40AF; 
-            font-size: 36px; 
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-weight: 900; 
-            margin-bottom: 10px; 
+            text-align: left; 
+            color: #3B5998; 
+            font-size: 48px; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-weight: 700; 
+            margin-bottom: 20px; 
         '>
             Custom Weather Score Calculator ⛅
         </div>
         <div style='
-            text-align: center;
+            text-align: left;
             color: #000000;
-            font-size: 20px;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-weight: 500;
-            margin-bottom: 20px;
+            font-size: 24px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            font-weight: 700;
+            margin-bottom: 30px;
         '>
             Enter the weather and get your flight's risk status in seconds!
         </div>
