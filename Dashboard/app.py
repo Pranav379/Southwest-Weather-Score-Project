@@ -747,43 +747,35 @@ elif page_selection == "Custom Weather Calculator":
         <div style='margin-bottom:12px; color:#555;'>Enter weather values (units shown). The app uses the same risk function as the CSV flow.</div>
     """, unsafe_allow_html=True)
 
-    # Inputs - keep units consistent with original script:
-    # wspd: kilometers per hour (script converts to mph for display)
-    # prcp: millimeters
-    # snow: millimeters
-    # pres: hPa
-    # dep_time: integer e.g., 1830 for 18:30
-    # distance: miles
-
+    # Inputs now in **imperial units for user convenience**
     with st.form(key="custom_form"):
         col1, col2 = st.columns(2)
         with col1:
-            input_wspd = st.number_input("Wind speed (wspd) — km/h", min_value=0.0, step=0.1, value=10.0)
-            input_prcp = st.number_input("Precipitation (prcp) — mm", min_value=0.0, step=0.1, value=0.0)
-            input_snow = st.number_input("Snow (snow) — mm", min_value=0.0, step=0.1, value=0.0)
+            input_wspd_mph = st.number_input("Wind speed (mph)", min_value=0.0, step=0.1, value=10.0)
+            input_prcp_in = st.number_input("Precipitation (inches)", min_value=0.0, step=0.01, value=0.0)
+            input_snow_in = st.number_input("Snow (inches)", min_value=0.0, step=0.01, value=0.0)
         with col2:
-            input_pres = st.number_input("Pressure (pres) — hPa", min_value=800.0, max_value=1100.0, step=0.1, value=1015.0)
-            input_dep_time = st.number_input("Scheduled Departure (dep_time) — HHMM (24-hr)", min_value=0, max_value=2359, step=1, value=1200)
+            input_pres_inhg = st.number_input("Pressure (inHg)", min_value=29.5, max_value=32.5, step=0.01, value=29.97)
+            input_dep_time = st.number_input("Scheduled Departure — HHMM (24h)", min_value=0, max_value=2359, step=1, value=1200)
             input_distance = st.number_input("Distance — miles", min_value=0.0, step=1.0, value=200.0)
 
         submit = st.form_submit_button("Calculate Score")
 
     if submit:
-        # Build dicts matching the expected structure of calculate_risk_score
+        # Convert imperial back to metric for calculate_risk_score
         custom_weather = {
-            'wspd': float(input_wspd),
-            'prcp': float(input_prcp),
-            'snow': float(input_snow),
-            'pres': float(input_pres),
-            # tavg isn't used by calculate_risk_score, but keep for display consistency
-            'tavg': 20.0
+            'wspd': float(input_wspd_mph) / 0.621371,  # mph -> km/h
+            'prcp': float(input_prcp_in) / 0.03937,    # in -> mm
+            'snow': float(input_snow_in) / 0.03937,    # in -> mm
+            'pres': float(input_pres_inhg) / 0.02953,  # inHg -> hPa
+            'tavg': 20.0                               # placeholder
         }
         custom_flight = {
             'dep_time': int(input_dep_time),
             'distance': float(input_distance)
         }
 
-        # Calculate score using the same function
+        # Calculate score
         custom_score = calculate_risk_score(custom_weather, custom_flight)
 
         # Determine status (same thresholds/colors)
@@ -816,7 +808,7 @@ elif page_selection == "Custom Weather Calculator":
         </div>
         """, unsafe_allow_html=True)
 
-        # Gauge + status (same visuals)
+        # Gauge + status
         col_gauge, col_status = st.columns([1, 1])
         with col_gauge:
             if HAS_PLOTTING:
@@ -825,13 +817,8 @@ elif page_selection == "Custom Weather Calculator":
                     value=custom_score,
                     domain={'x': [0, 1], 'y': [0, 1]},
                     gauge={
-                        'axis': {
-                            'range': [0, 100],
-                            'tickmode': 'array',
-                            'tickvals': [0, 25, 50, 75, 100],
-                            'ticktext': ['0', '25', '50', '75', '100'],
-                            'tickfont': {'size': 14, 'color': '#000000'},
-                        },
+                        'axis': {'range': [0, 100], 'tickmode': 'array', 'tickvals': [0, 25, 50, 75, 100],
+                                 'ticktext': ['0', '25', '50', '75', '100'], 'tickfont': {'size': 14, 'color': '#000000'}},
                         'bar': {'color': status_color},
                         'bgcolor': "white",
                         'steps': [
@@ -843,11 +830,7 @@ elif page_selection == "Custom Weather Calculator":
                         ]
                     }
                 ))
-                fig.update_layout(
-                    height=250,
-                    margin=dict(l=40, r=40, t=20, b=20),
-                    paper_bgcolor="rgba(0,0,0,0)"
-                )
+                fig.update_layout(height=250, margin=dict(l=40, r=40, t=20, b=20), paper_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig, use_container_width=True)
 
         with col_status:
@@ -859,14 +842,8 @@ elif page_selection == "Custom Weather Calculator":
         col_left, col_right = st.columns(2)
 
         with col_left:
-            # Show summary of inputs (converted for display)
-            wspd_mph = custom_weather['wspd'] * 0.621371
-            prcp_in = custom_weather['prcp'] * 0.03937
-            snow_in = custom_weather['snow'] * 0.03937
-            pres_in = custom_weather['pres'] * 0.02953
             dep_time_str = f"{int(custom_flight['dep_time']):04d}"
             formatted_dep_time = f"{dep_time_str[:2]}:{dep_time_str[2:]}"
-
             summary_html = f"""
             <div class="stCard">
                 <h3>✈️ Flight / Input Summary</h3>
@@ -883,15 +860,14 @@ elif page_selection == "Custom Weather Calculator":
             <div class="stCard" style="border-top: 5px solid #FFB612;">
                 <h3>☁️ Weather (Inputs)</h3>
                 <table class="details-table" style="width:100%">
-                    <tr><td class="details-label">Wind</td><td class="details-value">{wspd_mph:.1f} mph ({custom_weather['wspd']:.1f} km/h)</td></tr>
-                    <tr><td class="details-label">Precip</td><td class="details-value">{f'0 in' if prcp_in <= 0.01 else f'{prcp_in:.2f} in'} ({custom_weather['prcp']:.1f} mm)</td></tr>
-                    <tr><td class="details-label">Pressure</td><td class="details-value">{pres_in:.2f} inHg ({custom_weather['pres']:.1f} hPa)</td></tr>
-                    <tr><td class="details-label">Snow</td><td class="details-value">{f'0 in' if snow_in <= 0.01 else f'{snow_in:.2f} in'} ({custom_weather['snow']:.1f} mm)</td></tr>
+                    <tr><td class="details-label">Wind</td><td class="details-value">{input_wspd_mph:.1f} mph</td></tr>
+                    <tr><td class="details-label">Precip</td><td class="details-value">{input_prcp_in:.2f} in</td></tr>
+                    <tr><td class="details-label">Pressure</td><td class="details-value">{input_pres_inhg:.2f} inHg</td></tr>
+                    <tr><td class="details-label">Snow</td><td class="details-value">{input_snow_in:.2f} in</td></tr>
                 </table>
             </div>
             """
             st.markdown(weather_html, unsafe_allow_html=True)
-
     else:
         st.info("Enter custom weather inputs and click **Calculate Score**.")
 
