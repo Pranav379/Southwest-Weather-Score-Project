@@ -111,10 +111,68 @@ elif data is None:
 # ==========================================
 SOUTHWEST_CSS = """
 <style>
-    /* 1. Main Background */
+    /* 1. Main Background with Animated Gradient */
     [data-testid="stAppViewContainer"] {
-        background-color: #f4f7f6 !important; /* Very light grey-blue */
+        background: linear-gradient(-45deg, #e8f0f7, #f4f7f6, #e3f2fd, #f0f4f8);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
         color: #333333 !important;
+        position: relative;
+    }
+    
+    /* Animated floating clouds in background */
+    [data-testid="stAppViewContainer"]::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(ellipse 800px 300px at 20% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(ellipse 600px 250px at 80% 70%, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse 700px 280px at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+        animation: cloudFloat 25s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes cloudFloat {
+        0%, 100% { transform: translateX(0) translateY(0); opacity: 0.5; }
+        50% { transform: translateX(-30px) translateY(-20px); opacity: 0.7; }
+    }
+    
+    /* Ensure content appears above animated background */
+    [data-testid="stAppViewContainer"] > div {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Flying airplane animation */
+    @keyframes flyAcross {
+        0% { transform: translateX(-100px) translateY(0) rotate(-5deg); opacity: 0; }
+        10% { opacity: 0.15; }
+        90% { opacity: 0.15; }
+        100% { transform: translateX(calc(100vw + 100px)) translateY(-50px) rotate(-5deg); opacity: 0; }
+    }
+    
+    /* Add decorative airplane */
+    [data-testid="stAppViewContainer"]::after {
+        content: "✈️";
+        position: fixed;
+        font-size: 2rem;
+        top: 20%;
+        left: -100px;
+        animation: flyAcross 30s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.15;
     }
     
     /* 2. Cards (The "Boarding Pass" Look) */
@@ -125,6 +183,24 @@ SOUTHWEST_CSS = """
         box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Soft shadow */
         margin-bottom: 20px;
         border-top: 5px solid #304CB2; /* Southwest Blue Header Line */
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .stCard:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(48, 76, 178, 0.15);
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     /* 3. Headers */
@@ -201,21 +277,6 @@ SOUTHWEST_CSS = """
         font-weight: 600;
         font-size: 1rem;
         color: #222;
-    }
-    /* ... (keep your existing CSS) ... */
-    
-    /* 8. FIX: Force Input Labels to be Visible (Southwest Blue) */
-    .stSelectbox label p {
-        color: #304CB2 !important; /* Force text to Blue */
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Optional: Fix the dropdown box itself to look cleaner */
-    div[data-baseweb="select"] > div {
-        background-color: #ffffff !important; /* White background */
-        border: 1px solid #304CB2 !important; /* Blue border */
-        color: #333 !important; /* Dark text inside */
     }
 </style>
 """
