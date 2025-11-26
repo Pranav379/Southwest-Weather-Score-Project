@@ -735,17 +735,27 @@ if page_selection == "Flight Risk Viewer":
 elif page_selection == "Custom Weather Calculator":
     st.markdown("""
         <div style='
-            text-align: left; 
-            color: #000000; 
-            font-size: 20px; 
+            text-align: center; 
+            color: #1E40AF; 
+            font-size: 36px; 
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-weight: 800; 
-            margin-bottom: 20px; 
+            font-weight: 900; 
+            margin-bottom: 10px; 
         '>
-            Custom Weather Score Calculator
+            Custom Weather Score Calculator ⛅
         </div>
-        <div style='margin-bottom:12px; color:#555;'>Enter the weather and get your flight's risk status in seconds!</div>
+        <div style='
+            text-align: center;
+            color: #000000;
+            font-size: 20px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: 500;
+            margin-bottom: 20px;
+        '>
+            Enter the weather and get your flight's risk status in seconds!
+        </div>
     """, unsafe_allow_html=True)
+
 
     with st.form(key="custom_form"):
         col1, col2 = st.columns(2)
@@ -757,17 +767,17 @@ elif page_selection == "Custom Weather Calculator":
             )
             input_prcp_in = st.number_input(
                 "Precipitation (inches)", min_value=0.0, step=0.1,
-                format="%.2f", value=None, placeholder="e.g., 0.2"
+                format="%.1f", value=None, placeholder="e.g., 0.2"
             )
             input_snow_in = st.number_input(
                 "Snow (inches)", min_value=0.0, step=0.1,
-                format="%.2f", value=None, placeholder="e.g., 0"
+                format="%.1f", value=None, placeholder="e.g., 0"
             )
 
         with col2:
             input_pres_inhg = st.number_input(
                 "Pressure (inHg)", min_value=29.5, max_value=32.5, step=0.1,
-                format="%.2f", value=None, placeholder="e.g., 30"
+                format="%.1f", value=None, placeholder="e.g., 30"
             )
             input_dep_time = st.number_input(
                 "Scheduled Departure — HHMM (24h)", min_value=0, max_value=2359,
